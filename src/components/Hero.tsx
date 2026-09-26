@@ -13,11 +13,10 @@ export default function Hero() {
         playsInline
       />
 
-      <div className="pointer-events-none absolute inset-[12px] z-10 rounded-[2.2rem] border-[3px] border-transparent bg-[linear-gradient(135deg,rgba(255,255,255,1)_0%,rgba(255,255,255,0.95)_18%,rgba(255,255,255,0.6)_35%,rgba(255,255,255,0.16)_60%,rgba(255,255,255,0.05)_100%)] p-[2px] shadow-[0_0_45px_rgba(255,255,255,0.85),0_0_110px_rgba(255,255,255,0.18)] sm:inset-[14px]" />
-      <div className="pointer-events-none absolute inset-[22px] z-10 rounded-[1.9rem] border-[1.5px] border-white/85 bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,255,255,0.32),rgba(255,255,255,0.08))] shadow-[inset_0_0_26px_rgba(255,255,255,0.3)] sm:inset-[26px]" />
+      <div className="pointer-events-none absolute inset-[8px] z-10 rounded-[1.8rem] border border-white/20 sm:inset-[10px]" />
 
       {/* Overlay suave */}
-      <div className="absolute inset-0 z-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_38%,rgba(0,0,0,0.42)_100%)]" />
+      <div className="absolute inset-0 z-20 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.02),transparent_35%,rgba(0,0,0,0.32)_100%)]" />
       <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#3a3022]/30 via-[#3a3022]/20 to-[#2a2418]/60" />
 
       {/* Contenido */}
