@@ -56,27 +56,33 @@ export default function Navbar() {
         {/* Botón mobile */}
         <button
           onClick={() => setOpen(!open)}
-          className={`md:hidden ${scrolled ? 'text-[#3a3022]' : 'text-[#faf6ef]'}`}
+          className={`md:hidden inline-flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur-sm transition-all duration-300 ${
+            scrolled
+              ? 'border-[#d4b483]/60 bg-[#faf6ef]/90 text-[#3a3022] shadow-md'
+              : 'border-white/25 bg-[#2a2418]/30 text-[#faf6ef] shadow-lg shadow-[#2a2418]/20'
+          }`}
           aria-label="Menú"
         >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {/* Menú mobile desplegable */}
       {open && (
         <div className="md:hidden">
-          <div className="flex flex-col gap-1 bg-[#faf6ef]/98 px-6 pb-6 pt-2 shadow-lg backdrop-blur-sm">
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="border-b border-[#e6d5b8]/50 py-3 text-sm uppercase tracking-wider text-[#7c5e3c] transition-colors hover:text-[#d4b483]"
-              >
-                {link.label}
-              </a>
-            ))}
+          <div className="mx-4 mb-4 rounded-2xl border border-[#d4b483]/30 bg-[#faf6ef]/95 px-5 pb-4 pt-3 shadow-[0_18px_40px_rgba(42,36,24,0.18)] backdrop-blur-md">
+            <div className="flex flex-col gap-1">
+              {links.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setOpen(false)}
+                  className="border-b border-[#e6d5b8]/70 py-3 text-sm uppercase tracking-[0.2em] text-[#5e4630] transition-colors last:border-b-0 hover:text-[#d4b483]"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       )}

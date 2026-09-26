@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { weddingConfig } from '@/lib/config';
 
 type Props = {
@@ -7,25 +7,70 @@ type Props = {
 
 export default function Intro({ onEnter }: Props) {
   const [videoReady, setVideoReady] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const handleEnter = async () => {
+    if (isTransitioning) return;
+
+    setIsTransitioning(true);
+
+    const video = videoRef.current;
+
+    if (video) {
+      video.currentTime = 0;
+      try {
+        await video.play();
+      } catch {
+        // El navegador puede bloquear la reproducción hasta una interacción del usuario.
+      }
+    }
+
+    window.setTimeout(() => {
+      onEnter();
+    }, 4500);
+  };
 
   return (
     <div
       className="relative flex min-h-screen cursor-pointer items-center justify-center overflow-hidden bg-[#2a2418]"
-      onClick={onEnter}
+      onPointerDown={handleEnter}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleEnter();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label="Abrir invitación"
     >
       {/* Video de fondo del sobre animado */}
       <video
+        ref={videoRef}
         className="absolute inset-0 h-full w-full object-cover"
         src="https://res.cloudinary.com/dhvrrxejo/video/upload/v1790455774/sobre_animado_e1hllt.mp4"
-        autoPlay
         loop
         muted
         playsInline
+        preload="metadata"
         onCanPlay={() => setVideoReady(true)}
       />
 
       {/* Overlay oscuro para legibilidad */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#2a2418]/50 via-[#2a2418]/30 to-[#2a2418]/70" />
+
+      {/* Motivos decorativos en primer plano */}
+      <img
+        src="https://res.cloudinary.com/dhvrrxejo/image/upload/v1790459052/pngwing.com_4_z0rhv0.png"
+        alt="Decoración superior izquierda"
+        className="pointer-events-none absolute -left-4 -top-4 z-20 w-28 opacity-80 sm:w-36 md:w-44"
+      />
+      <img
+        src="https://res.cloudinary.com/dhvrrxejo/image/upload/v1790459052/pngwing.com_4_z0rhv0.png"
+        alt="Decoración inferior derecha"
+        className="pointer-events-none absolute -bottom-4 -right-4 z-20 w-28 rotate-180 opacity-80 sm:w-36 md:w-44"
+      />
 
       {/* Contenido superpuesto */}
       <div
@@ -33,8 +78,8 @@ export default function Intro({ onEnter }: Props) {
           videoReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
         }`}
       >
-        <p className="font-['Cormorant_Garamond'] text-sm uppercase tracking-[0.5em] mb-6 opacity-80">
-          Tenés una invitación
+        <p className="font-['Cormorant_Garamond'] text-sm uppercase tracking-[0.5em] mb-6 opacity-100">
+          Tienés una invitación
         </p>
 
         <div className="flex items-center gap-4 sm:gap-8">
