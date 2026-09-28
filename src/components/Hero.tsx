@@ -3,14 +3,10 @@ import { weddingConfig } from '@/lib/config';
 export default function Hero() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
-      {/* Video de fondo en loop */}
-      <video
+      <img
         className="absolute inset-0 z-0 h-full w-full object-cover"
-        src="https://res.cloudinary.com/dhvrrxejo/video/upload/v1790452001/WhatsApp_Video_2026-09-26_at_16.45.45_vximdq.mp4"
-        autoPlay
-        loop
-        muted
-        playsInline
+        src={weddingConfig.heroImage}
+        alt="Belén y Facundo"
       />
 
       <div className="pointer-events-none absolute inset-[8px] z-10 rounded-[1.8rem] border border-white/20 sm:inset-[10px]" />
