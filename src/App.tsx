@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Countdown from '@/components/Countdown';
@@ -12,6 +12,18 @@ import Intro from '@/components/Intro';
 
 export default function App() {
   const [entered, setEntered] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (!entered || !audioRef.current) return;
+
+    const audio = audioRef.current;
+    audio.volume = 0.35;
+    audio.loop = true;
+    audio.play().catch(() => {
+      // El navegador puede bloquear la reproducción automática hasta la interacción del usuario.
+    });
+  }, [entered]);
 
   if (!entered) {
     return <Intro onEnter={() => setEntered(true)} />;
@@ -19,6 +31,9 @@ export default function App() {
 
   return (
     <div id="top" className="relative min-h-screen bg-[#faf6ef] animate-fade-in-up">
+      <audio ref={audioRef} preload="auto" loop>
+        <source src="/Justin Bieber - Peaches .mp3" type="audio/mpeg" />
+      </audio>
       <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
         <img
           src="https://res.cloudinary.com/dhvrrxejo/image/upload/v1790459052/pngwing.com_4_z0rhv0.png"

@@ -20,18 +20,14 @@ export const weddingConfig = {
   storyText:
     'Belén y Facundo se conocieron una tarde de otoño en 2021. Lo que comenzó como una charla casual sobre libros en un café del centro, se transformó en una historia de amor que ya no se detuvo. Cada día juntos fue un capítulo nuevo: viajes, risas, proyectos y sueños compartidos. Hoy, casi seis años después, decidieron dar el gran paso y jurarse amor eterno rodeados de las personas que más aman.',
   galleryImages: [
-    '78 copiablancoynegro.jpg',
     'editada11byn.jpg',
     '_MG_0020.JPG',
-    '_MG_0024.JPG',
     '_MG_0033.JPG',
-    '_MG_0039.JPG',
     '_MG_0047.JPG',
     '_MG_0063.JPG',
     '_MG_0066.JPG',
     '_MG_0078.JPG',
     '_MG_0089.JPG',
-    '_MG_0114.JPG',
     '_MG_0121.JPG',
     '_MG_0127.JPG',
     '_MG_0176.JPG',
