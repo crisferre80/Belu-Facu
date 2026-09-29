@@ -11,32 +11,48 @@ import Footer from '@/components/Footer';
 import Intro from '@/components/Intro';
 
 const getGuestLabel = () => {
-  if (typeof window === 'undefined') return '';
+  if (typeof window === 'undefined') return { guestLabel: '', familyName: '', familyMembers: [] as string[] };
 
   const params = new URLSearchParams(window.location.search);
+  const familyName = params.get('familia') ?? params.get('grupo') ?? '';
+  const rawMembers = params.get('integrantes') ?? params.get('miembros') ?? '';
+  const familyMembers = rawMembers
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
   const rawValue =
     params.get('invitado') ??
     params.get('nombre') ??
     params.get('name') ??
     params.get('guest') ??
-    params.get('grupo') ??
+    familyName ??
     params.get('names') ??
     '';
 
-  return rawValue
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .join(', ');
+  return {
+    guestLabel: rawValue
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .join(', '),
+    familyName,
+    familyMembers,
+  };
 };
 
 export default function App() {
   const [entered, setEntered] = useState(false);
   const [guestLabel, setGuestLabel] = useState('');
+  const [familyName, setFamilyName] = useState('');
+  const [familyMembers, setFamilyMembers] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    setGuestLabel(getGuestLabel());
+    const result = getGuestLabel();
+    setGuestLabel(result.guestLabel);
+    setFamilyName(result.familyName);
+    setFamilyMembers(result.familyMembers);
   }, []);
 
   useEffect(() => {
@@ -74,7 +90,7 @@ export default function App() {
 
       <div className="relative z-0">
         <Navbar />
-        <Hero guestLabel={guestLabel} />
+        <Hero guestLabel={guestLabel} familyName={familyName} familyMembers={familyMembers} />
         <Countdown />
         <Story />
         <Details />

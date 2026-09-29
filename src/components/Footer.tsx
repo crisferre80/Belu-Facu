@@ -35,24 +35,38 @@ const normalizePhone = (value: string | null | undefined) => {
 
 const INVITATION_URL = 'https://belu-facu.vercel.app/';
 
-const buildInvitationLink = (nombre: string) => {
-  const encodedName = encodeURIComponent(nombre.trim());
-  return `${INVITATION_URL}?invitado=${encodedName}`;
+const buildInvitationLink = (nombre: string, familyName?: string | null, familyMembers: string[] = []) => {
+  const params = new URLSearchParams();
+  const cleanName = nombre.trim();
+  const cleanFamily = familyName?.trim();
+  const cleanMembers = Array.from(new Set(familyMembers.map((member) => member.trim()).filter(Boolean)));
+
+  params.set('invitado', cleanName);
+  if (cleanFamily) params.set('familia', cleanFamily);
+  if (cleanMembers.length) params.set('integrantes', cleanMembers.join(', '));
+
+  return `${INVITATION_URL}?${params.toString()}`;
 };
 
-const formatMessage = (nombre: string, customText: string) => {
-  const link = buildInvitationLink(nombre);
+const formatMessage = (nombre: string, customText: string, familyName?: string | null, familyMembers: string[] = []) => {
+  const link = buildInvitationLink(nombre, familyName, familyMembers);
   const base = customText
     .replace(/\{nombre\}/gi, nombre)
     .replace(/\{nombres?\}/gi, nombre)
+    .replace(/\{familia\}/gi, familyName ?? '')
+    .replace(/\{grupos?\}/gi, familyName ?? '')
+    .replace(/\{integrantes?\}/gi, familyMembers.join(', '))
+    .replace(/\{miembros?\}/gi, familyMembers.join(', '))
     .replace(/\{bride\}/gi, weddingConfig.brideName)
     .replace(/\{groom\}/gi, weddingConfig.groomName)
     .replace(/\{link\}/gi, link)
     .trim();
 
+  const familyText = familyName ? ` Familia: ${familyName}${familyMembers.length ? ` (${familyMembers.join(', ')})` : ''}.` : '';
+
   return (
     base ||
-    `¡Hola ${nombre}! Te invitamos a nuestra boda de ${weddingConfig.brideName} y ${weddingConfig.groomName}. Ingresá acá: ${link}`
+    `¡Hola ${nombre}!${familyText} Te invitamos a nuestra boda de ${weddingConfig.brideName} y ${weddingConfig.groomName}. Ingresá acá: ${link}`
   );
 };
 
@@ -380,7 +394,13 @@ export default function Footer() {
     selectedInvitees.forEach((invitee) => {
       const phone = normalizePhone(invitee.telefono ?? null);
       if (!phone) return;
-      const message = encodeURIComponent(formatMessage(invitee.nombre, customText));
+      const familyName = invitee.familia ?? invitee.lista ?? invitee.grupo ?? null;
+      const familyMembers = invitees
+        .filter((item) =>
+          [item.familia, item.lista, item.grupo].includes(familyName ?? '') && item.nombre !== invitee.nombre
+        )
+        .map((item) => item.nombre);
+      const message = encodeURIComponent(formatMessage(invitee.nombre, customText, familyName, [invitee.nombre, ...familyMembers]));
       const url = `https://wa.me/${phone}?text=${message}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     });
@@ -504,10 +524,12 @@ export default function Footer() {
         [invitee.familia, invitee.lista, invitee.grupo].filter(Boolean).includes(groupName)
     );
 
+    const familyMembers = Array.from(new Set(groupInvitees.map((invitee) => invitee.nombre))).filter(Boolean);
+
     groupInvitees.forEach((invitee) => {
       const phone = normalizePhone(invitee.telefono ?? null);
       if (!phone) return;
-      const message = encodeURIComponent(formatMessage(invitee.nombre, customText));
+      const message = encodeURIComponent(formatMessage(invitee.nombre, customText, groupName, familyMembers));
       const url = `https://wa.me/${phone}?text=${message}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     });

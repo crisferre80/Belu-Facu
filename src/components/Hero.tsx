@@ -2,12 +2,17 @@ import { weddingConfig } from '@/lib/config';
 
 type HeroProps = {
   guestLabel?: string;
+  familyName?: string;
+  familyMembers?: string[];
 };
 
-export default function Hero({ guestLabel }: HeroProps) {
+export default function Hero({ guestLabel, familyName, familyMembers = [] }: HeroProps) {
+  const familySummary = familyName && familyMembers.length ? `${familyName}: ${familyMembers.join(', ')}` : '';
   const personalizedText = guestLabel
     ? `${guestLabel}, te invitamos a compartir nuestra historia.`
-    : 'Te invitamos a compartir nuestra historia.';
+    : familySummary
+      ? `${familySummary}. Te invitamos a compartir nuestra historia.`
+      : 'Te invitamos a compartir nuestra historia.';
 
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
@@ -30,6 +35,14 @@ export default function Hero({ guestLabel }: HeroProps) {
             {personalizedText}
           </p>
         </div>
+
+        {familySummary && (
+          <div className="mb-4 rounded-full border border-white/20 bg-[#2a231b]/25 px-4 py-2 shadow-[0_10px_25px_rgba(0,0,0,0.15)] backdrop-blur-sm">
+            <p className="text-[0.6rem] uppercase tracking-[0.28em] text-[#f9ead2] sm:text-[0.7rem]">
+              {familySummary}
+            </p>
+          </div>
+        )}
 
         <p className="font-[\'Cormorant_Garamond\'] mb-6 text-sm uppercase tracking-[0.5em] text-[#f7ebdc] opacity-95">
           ¡Nos casamos!
