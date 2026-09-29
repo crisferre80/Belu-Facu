@@ -29,18 +29,24 @@ const normalizePhone = (value: string | null | undefined) => {
 
 const INVITATION_URL = 'https://belu-facu.vercel.app/';
 
+const buildInvitationLink = (nombre: string) => {
+  const encodedName = encodeURIComponent(nombre.trim());
+  return `${INVITATION_URL}?invitado=${encodedName}`;
+};
+
 const formatMessage = (nombre: string, customText: string) => {
+  const link = buildInvitationLink(nombre);
   const base = customText
     .replace(/\{nombre\}/gi, nombre)
     .replace(/\{nombres?\}/gi, nombre)
     .replace(/\{bride\}/gi, weddingConfig.brideName)
     .replace(/\{groom\}/gi, weddingConfig.groomName)
-    .replace(/\{link\}/gi, INVITATION_URL)
+    .replace(/\{link\}/gi, link)
     .trim();
 
   return (
     base ||
-    `¡Hola ${nombre}! Te invitamos a nuestra boda de ${weddingConfig.brideName} y ${weddingConfig.groomName}. Ingresá acá: ${INVITATION_URL}`
+    `¡Hola ${nombre}! Te invitamos a nuestra boda de ${weddingConfig.brideName} y ${weddingConfig.groomName}. Ingresá acá: ${link}`
   );
 };
 
