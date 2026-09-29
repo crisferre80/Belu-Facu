@@ -66,6 +66,11 @@ export default function Footer() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [familyName, setFamilyName] = useState('');
+  const [selectedFamily, setSelectedFamily] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterFamily, setFilterFamily] = useState('all');
+  const [filterMesa, setFilterMesa] = useState('all');
+  const [showOnlyConfirmed, setShowOnlyConfirmed] = useState(false);
   const [draftInvitee, setDraftInvitee] = useState({
     nombre: '',
     email: '',
@@ -135,7 +140,9 @@ export default function Footer() {
         const key = label.trim();
         if (!key) return;
         const current = grouped.get(key) ?? [];
-        current.push(invitee);
+        if (!current.some((item) => item.id === invitee.id)) {
+          current.push(invitee);
+        }
         grouped.set(key, current);
       });
     });
@@ -143,6 +150,59 @@ export default function Footer() {
     return Array.from(grouped.entries())
       .map(([name, groupInvitees]) => ({ name, invitees: groupInvitees }))
       .sort((a, b) => a.name.localeCompare(b.name));
+  }, [invitees]);
+
+  const selectedFamilyMembers = useMemo(() => {
+    if (!selectedFamily) return [];
+    return invitees.filter((invitee) =>
+      [invitee.familia, invitee.lista, invitee.grupo].includes(selectedFamily)
+    );
+  }, [invitees, selectedFamily]);
+
+  const filteredInvitees = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    return invitees.filter((invitee) => {
+      const matchesSearch =
+        !query ||
+        invitee.nombre.toLowerCase().includes(query) ||
+        (invitee.telefono ?? '').toLowerCase().includes(query) ||
+        (invitee.email ?? '').toLowerCase().includes(query) ||
+        (invitee.familia ?? '').toLowerCase().includes(query) ||
+        (invitee.grupo ?? '').toLowerCase().includes(query);
+
+      const matchesFamily =
+        filterFamily === 'all' ||
+        [invitee.familia, invitee.lista, invitee.grupo].includes(filterFamily);
+
+      const matchesMesa = filterMesa === 'all' || String(invitee.mesa ?? '') === filterMesa;
+      const matchesConfirmed = !showOnlyConfirmed || invitee.asistira === true;
+
+      return matchesSearch && matchesFamily && matchesMesa && matchesConfirmed;
+    });
+  }, [invitees, searchTerm, filterFamily, filterMesa, showOnlyConfirmed]);
+
+  const adminSummary = useMemo(() => {
+    const confirmed = invitees.filter((invitee) => invitee.asistira).length;
+    const pending = invitees.length - confirmed;
+    const uniqueFamilies = new Set(
+      invitees
+        .flatMap((invitee) => [invitee.familia, invitee.lista, invitee.grupo])
+        .filter((value): value is string => Boolean(value))
+    );
+    const uniqueTables = new Set(
+      invitees
+        .map((invitee) => invitee.mesa)
+        .filter((value): value is number => value !== null && value > 0)
+    );
+
+    return {
+      total: invitees.length,
+      confirmed,
+      pending,
+      families: uniqueFamilies.size,
+      tables: uniqueTables.size,
+    };
   }, [invitees]);
 
   const startEditing = (invitee: Invitee) => {
@@ -172,11 +232,13 @@ export default function Footer() {
     const listValue = draftInvitee.lista?.trim() || null;
     const groupValue = draftInvitee.grupo?.trim() || null;
 
+    const safeEmail = trimmedEmail || '';
+
     const { error } = await supabase
       .from('rsvp')
       .update({
         nombre: trimmedNombre,
-        email: trimmedEmail || null,
+        email: safeEmail,
         telefono: trimmedTelefono || null,
         mesa: draftInvitee.mesa,
         familia: familyValue,
@@ -193,7 +255,7 @@ export default function Footer() {
             ? {
                 ...item,
                 nombre: trimmedNombre,
-                email: trimmedEmail || null,
+                email: trimmedEmail || '',
                 telefono: trimmedTelefono || null,
                 mesa: draftInvitee.mesa,
                 familia: familyValue,
@@ -283,7 +345,7 @@ export default function Footer() {
       const rowsToInsert = imported.map((invitee) => ({
         id: invitee.id,
         nombre: invitee.nombre,
-        email: invitee.email || null,
+        email: invitee.email || '',
         telefono: invitee.telefono || null,
         asistira: invitee.asistira ?? true,
         cantidad_acompanantes: invitee.cantidad_acompanantes ?? 0,
@@ -324,6 +386,25 @@ export default function Footer() {
     });
   };
 
+  const exportInvitees = () => {
+    const rows = (filteredInvitees.length ? filteredInvitees : invitees).map((invitee) => ({
+      nombre: invitee.nombre,
+      telefono: invitee.telefono ?? '',
+      email: invitee.email ?? '',
+      mesa: invitee.mesa ?? '',
+      familia: invitee.familia ?? '',
+      lista: invitee.lista ?? '',
+      grupo: invitee.grupo ?? '',
+      asistira: invitee.asistira ? 'Sí' : 'No',
+      acompanantes: invitee.cantidad_acompanantes ?? 0,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Invitados');
+    XLSX.writeFile(wb, `invitados_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
   const assignFamilyToSelection = async (newFamilyName: string) => {
     const trimmedName = newFamilyName.trim();
     if (!trimmedName) return;
@@ -350,6 +431,70 @@ export default function Footer() {
         )
       );
       setFamilyName('');
+      setSelectedFamily(trimmedName);
+    }
+  };
+
+  const renameFamilyGroup = async (oldName: string, newName: string) => {
+    const trimmedName = newName.trim();
+    if (!trimmedName || trimmedName === oldName) return;
+
+    const targetIds = invitees
+      .filter((invitee) => [invitee.familia, invitee.lista, invitee.grupo].includes(oldName))
+      .map((invitee) => invitee.id);
+
+    if (!targetIds.length) return;
+
+    const { error } = await supabase
+      .from('rsvp')
+      .update({ familia: trimmedName, lista: trimmedName, grupo: trimmedName })
+      .in('id', targetIds);
+
+    if (!error) {
+      setInvitees((current) =>
+        current.map((invitee) =>
+          targetIds.includes(invitee.id)
+            ? {
+                ...invitee,
+                familia: trimmedName,
+                lista: trimmedName,
+                grupo: trimmedName,
+              }
+            : invitee
+        )
+      );
+      setSelectedFamily(trimmedName);
+    }
+  };
+
+  const deleteFamilyGroup = async (groupName: string) => {
+    const targetIds = invitees
+      .filter((invitee) => [invitee.familia, invitee.lista, invitee.grupo].includes(groupName))
+      .map((invitee) => invitee.id);
+
+    if (!targetIds.length) return;
+
+    const { error } = await supabase
+      .from('rsvp')
+      .update({ familia: null, lista: null, grupo: null })
+      .in('id', targetIds);
+
+    if (!error) {
+      setInvitees((current) =>
+        current.map((invitee) =>
+          targetIds.includes(invitee.id)
+            ? {
+                ...invitee,
+                familia: null,
+                lista: null,
+                grupo: null,
+              }
+            : invitee
+        )
+      );
+      if (selectedFamily === groupName) {
+        setSelectedFamily(null);
+      }
     }
   };
 
@@ -509,6 +654,92 @@ export default function Footer() {
               />
             </div>
 
+            <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Total</p>
+                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.total}</p>
+              </div>
+              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Confirman</p>
+                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.confirmed}</p>
+              </div>
+              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Pendientes</p>
+                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.pending}</p>
+              </div>
+              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Familias</p>
+                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.families}</p>
+              </div>
+              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Mesas</p>
+                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.tables}</p>
+              </div>
+            </div>
+
+            <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
+              <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto_auto] md:items-end">
+                <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                  Buscar invitado
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Nombre, teléfono o familia"
+                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                  />
+                </label>
+
+                <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                  Familia
+                  <select
+                    value={filterFamily}
+                    onChange={(e) => setFilterFamily(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                  >
+                    <option value="all">Todas</option>
+                    {familyGroups.map(({ name }) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                  Mesa
+                  <select
+                    value={filterMesa}
+                    onChange={(e) => setFilterMesa(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                  >
+                    <option value="all">Todas</option>
+                    {Array.from({ length: TABLE_COUNT }, (_, index) => (
+                      <option key={index + 1} value={String(index + 1)}>
+                        Mesa {index + 1}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="flex items-center gap-2 rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                  <input
+                    type="checkbox"
+                    checked={showOnlyConfirmed}
+                    onChange={(e) => setShowOnlyConfirmed(e.target.checked)}
+                    className="h-4 w-4 accent-[#b08968]"
+                  />
+                  Confirman
+                </label>
+
+                <button
+                  type="button"
+                  onClick={exportInvitees}
+                  className="rounded-full bg-[#2a2418] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+                >
+                  Export Excel
+                </button>
+              </div>
+            </div>
+
             <div className="mb-4 flex items-center justify-between">
               <span className="text-sm text-[#7c5e3c]">
                 {selectedInvitees.length} seleccionados
@@ -545,17 +776,71 @@ export default function Footer() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {familyGroups.map(({ name, invitees: groupInvitees }) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => sendFamilyGroup(name)}
-                    className="rounded-full border border-[#d4b483]/30 bg-[#f8f0e2] px-2.5 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
-                  >
-                    {name} ({groupInvitees.length})
-                  </button>
-                ))}
+                {familyGroups.map(({ name, invitees: groupInvitees }) => {
+                  const isActive = selectedFamily === name;
+                  return (
+                    <div key={name} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFamily(isActive ? null : name)}
+                        className={`rounded-full border px-2.5 py-1.5 text-[10px] uppercase tracking-[0.2em] ${
+                          isActive
+                            ? 'border-[#b08968] bg-[#f6ebde] text-[#3a3022]'
+                            : 'border-[#d4b483]/30 bg-[#f8f0e2] text-[#4d3d2a]'
+                        }`}
+                      >
+                        {name} ({groupInvitees.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => sendFamilyGroup(name)}
+                        className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-emerald-700"
+                        title="Enviar WhatsApp a esta familia"
+                      >
+                        WA
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
+
+              {selectedFamily && (
+                <div className="mt-4 rounded-2xl border border-[#eadcc1] bg-[#fffaf2] p-3">
+                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#3a3022]">
+                      Miembros de {selectedFamily}
+                    </h4>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        defaultValue={selectedFamily}
+                        onBlur={(e) => renameFamilyGroup(selectedFamily, e.target.value)}
+                        className="w-36 rounded-lg border border-[#e0d0b0] bg-white px-2 py-1 text-xs text-[#3a3022] outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => deleteFamilyGroup(selectedFamily)}
+                        className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] text-red-700"
+                      >
+                        Borrar
+                      </button>
+                    </div>
+                  </div>
+
+                  <ul className="space-y-1 text-sm text-[#5d4b3a]">
+                    {selectedFamilyMembers.length === 0 ? (
+                      <li className="text-[#7c5e3c]">No hay miembros cargados.</li>
+                    ) : (
+                      selectedFamilyMembers.map((member) => (
+                        <li key={member.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-2 py-1.5">
+                          <span>{member.nombre}</span>
+                          <span className="text-xs text-[#7c5e3c]">Mesa {member.mesa ?? '—'}</span>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -580,11 +865,13 @@ export default function Footer() {
             <div className="max-h-80 overflow-auto rounded-2xl border border-[#e6d5b8] bg-white">
               {isLoading ? (
                 <div className="p-4 text-sm text-[#7c5e3c]">Cargando invitados…</div>
-              ) : invitees.length === 0 ? (
-                <div className="p-4 text-sm text-[#7c5e3c]">Todavía no hay invitados cargados.</div>
+              ) : filteredInvitees.length === 0 ? (
+                <div className="p-4 text-sm text-[#7c5e3c]">
+                  {invitees.length === 0 ? 'Todavía no hay invitados cargados.' : 'No hay invitados con esos filtros.'}
+                </div>
               ) : (
                 <ul className="divide-y divide-[#f2e7d8]">
-                  {invitees.map((invitee) => {
+                  {filteredInvitees.map((invitee) => {
                     const isSelected = selectedIds.includes(invitee.id);
                     const isEditing = editingId === invitee.id;
 
