@@ -1,6 +1,14 @@
 import { weddingConfig } from '@/lib/config';
 
-export default function Hero() {
+type HeroProps = {
+  guestLabel?: string;
+};
+
+export default function Hero({ guestLabel }: HeroProps) {
+  const personalizedText = guestLabel
+    ? `${guestLabel}, te invitamos a compartir nuestra historia.`
+    : 'Te invitamos a compartir nuestra historia.';
+
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
       <img
@@ -17,6 +25,10 @@ export default function Hero() {
 
       {/* Contenido */}
       <div className="relative z-30 flex flex-col items-center px-6 text-center text-[#faf6ef] animate-fade-in-up">
+        <p className="mb-4 max-w-2xl text-sm uppercase tracking-[0.45em] text-[#f4e8d8] opacity-90 sm:text-base">
+          {personalizedText}
+        </p>
+
         <p className="font-[\'Cormorant_Garamond\'] text-sm uppercase tracking-[0.5em] mb-6 opacity-90">
           ¡Nos casamos!
         </p>

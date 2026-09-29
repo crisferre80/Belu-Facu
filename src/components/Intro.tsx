@@ -3,9 +3,13 @@ import { weddingConfig } from '@/lib/config';
 
 type Props = {
   onEnter: () => void;
+  guestLabel?: string;
 };
 
-export default function Intro({ onEnter }: Props) {
+export default function Intro({ onEnter, guestLabel }: Props) {
+  const personalizedText = guestLabel
+    ? `${guestLabel}, te invitamos a compartir nuestra historia.`
+    : 'Te invitamos a compartir nuestra historia.';
   const [videoReady, setVideoReady] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -78,6 +82,10 @@ export default function Intro({ onEnter }: Props) {
           videoReady ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
         }`}
       >
+        <p className="mb-4 max-w-2xl text-sm uppercase tracking-[0.35em] text-[#f3e7d8] opacity-100">
+          {personalizedText}
+        </p>
+
         <p className="font-['Cormorant_Garamond'] text-sm uppercase tracking-[0.5em] mb-6 opacity-100">
           Tienés una invitación
         </p>

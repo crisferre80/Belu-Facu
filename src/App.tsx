@@ -10,9 +10,34 @@ import RsvpForm from '@/components/RsvpForm';
 import Footer from '@/components/Footer';
 import Intro from '@/components/Intro';
 
+const getGuestLabel = () => {
+  if (typeof window === 'undefined') return '';
+
+  const params = new URLSearchParams(window.location.search);
+  const rawValue =
+    params.get('invitado') ??
+    params.get('nombre') ??
+    params.get('name') ??
+    params.get('guest') ??
+    params.get('grupo') ??
+    params.get('names') ??
+    '';
+
+  return rawValue
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(', ');
+};
+
 export default function App() {
   const [entered, setEntered] = useState(false);
+  const [guestLabel, setGuestLabel] = useState('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    setGuestLabel(getGuestLabel());
+  }, []);
 
   useEffect(() => {
     if (!entered || !audioRef.current) return;
@@ -26,7 +51,7 @@ export default function App() {
   }, [entered]);
 
   if (!entered) {
-    return <Intro onEnter={() => setEntered(true)} />;
+    return <Intro guestLabel={guestLabel} onEnter={() => setEntered(true)} />;
   }
 
   return (
@@ -49,7 +74,7 @@ export default function App() {
 
       <div className="relative z-0">
         <Navbar />
-        <Hero />
+        <Hero guestLabel={guestLabel} />
         <Countdown />
         <Story />
         <Details />
