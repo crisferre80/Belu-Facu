@@ -25,11 +25,13 @@ export default function Hero({ guestLabel }: HeroProps) {
 
       {/* Contenido */}
       <div className="relative z-30 flex flex-col items-center px-6 text-center text-[#faf6ef] animate-fade-in-up">
-        <p className="mb-4 max-w-2xl text-sm uppercase tracking-[0.45em] text-[#f4e8d8] opacity-90 sm:text-base">
-          {personalizedText}
-        </p>
+        <div className="mb-6 w-fit max-w-[90vw] rounded-full border border-[#f6ead7]/40 bg-[#2a231b]/35 px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.28)] backdrop-blur-[2px] sm:px-7">
+          <p className="text-[0.62rem] font-medium uppercase tracking-[0.28em] text-[#fef4e4] sm:text-xs">
+            {personalizedText}
+          </p>
+        </div>
 
-        <p className="font-[\'Cormorant_Garamond\'] text-sm uppercase tracking-[0.5em] mb-6 opacity-90">
+        <p className="font-[\'Cormorant_Garamond\'] mb-6 text-sm uppercase tracking-[0.5em] text-[#f7ebdc] opacity-95">
           ¡Nos casamos!
         </p>
 
