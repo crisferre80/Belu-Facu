@@ -16,6 +16,7 @@ export type Rsvp = {
   familia: string | null;
   lista: string | null;
   grupo: string | null;
+  invitacion_enviada: boolean;
   mensaje: string | null;
   restriccion_alimentaria: string | null;
   cancion_recomendada: string | null;

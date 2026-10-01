@@ -18,6 +18,7 @@ type Invitee = {
   familia?: string | null;
   lista?: string | null;
   grupo?: string | null;
+  invitacion_enviada?: boolean | null;
   created_at?: string | null;
 };
 
@@ -93,7 +94,7 @@ export default function Footer() {
     familia: '',
     lista: '',
     grupo: '',
-    asistira: true,
+    asistira: false,
   });
   const [customText, setCustomText] = useState(
     '¡Hola {nombre}! Te invitamos a celebrar nuestro día más especial. Te esperamos en nuestra boda de Belén y Facundo. Nos encantaría compartir este momento contigo. Invitación: {link}'
@@ -118,6 +119,7 @@ export default function Footer() {
             familia: item.familia ?? null,
             lista: item.lista ?? null,
             grupo: item.grupo ?? null,
+            invitacion_enviada: item.invitacion_enviada ?? false,
             created_at: item.created_at,
           }))
         );
@@ -125,7 +127,16 @@ export default function Footer() {
       setIsLoading(false);
     };
 
-    fetchInvitees();
+    const handleRsvpUpdated = () => {
+      void fetchInvitees();
+    };
+
+    void fetchInvitees();
+    window.addEventListener('rsvp-updated', handleRsvpUpdated);
+
+    return () => {
+      window.removeEventListener('rsvp-updated', handleRsvpUpdated);
+    };
   }, []);
 
   const selectedInvitees = useMemo(
@@ -207,7 +218,7 @@ export default function Footer() {
     const uniqueTables = new Set(
       invitees
         .map((invitee) => invitee.mesa)
-        .filter((value): value is number => value !== null && value > 0)
+        .filter((value): value is number => typeof value === 'number' && value > 0)
     );
 
     return {
@@ -229,7 +240,7 @@ export default function Footer() {
       familia: invitee.familia ?? '',
       lista: invitee.lista ?? '',
       grupo: invitee.grupo ?? '',
-      asistira: invitee.asistira ?? true,
+      asistira: invitee.asistira ?? false,
     });
   };
 
@@ -304,6 +315,23 @@ export default function Footer() {
     );
   };
 
+  const toggleInvitationSent = async (invitee: Invitee) => {
+    const nextValue = !(invitee.invitacion_enviada ?? false);
+
+    const { error } = await supabase
+      .from('rsvp')
+      .update({ invitacion_enviada: nextValue })
+      .eq('id', invitee.id);
+
+    if (!error) {
+      setInvitees((current) =>
+        current.map((item) =>
+          item.id === invitee.id ? { ...item, invitacion_enviada: nextValue } : item
+        )
+      );
+    }
+  };
+
   const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -329,6 +357,7 @@ export default function Footer() {
           const familia = String(row.familia ?? row.Familia ?? row['Familia'] ?? row['Grupo familiar'] ?? '').trim();
           const lista = String(row.lista ?? row.Lista ?? row['Lista'] ?? row['Lista familiar'] ?? '').trim();
           const grupo = String(row.grupo ?? row.Grupo ?? row['Grupo'] ?? '').trim();
+          const rawAsistira = row.asistira ?? row.Asistira ?? row['Asistirá'] ?? row['Asistencia'] ?? false;
 
           if (!nombre) return null;
 
@@ -340,12 +369,13 @@ export default function Footer() {
             nombre,
             email: email || null,
             telefono: telefono || null,
-            asistira: true,
+            asistira: rawAsistira === true || rawAsistira === 'true' || rawAsistira === 'si' || rawAsistira === 'sí',
             cantidad_acompanantes: Number(row.acompanantes ?? row['Cantidad acompañantes'] ?? 0) || 0,
             mesa,
             familia: familia || null,
             lista: lista || null,
             grupo: grupo || null,
+            invitacion_enviada: false,
             created_at: new Date().toISOString(),
           } satisfies Invitee;
         })
@@ -361,12 +391,13 @@ export default function Footer() {
         nombre: invitee.nombre,
         email: invitee.email || '',
         telefono: invitee.telefono || null,
-        asistira: invitee.asistira ?? true,
+        asistira: invitee.asistira ?? false,
         cantidad_acompanantes: invitee.cantidad_acompanantes ?? 0,
         mesa: invitee.mesa ?? null,
         familia: invitee.familia ?? null,
         lista: invitee.lista ?? null,
         grupo: invitee.grupo ?? null,
+        invitacion_enviada: invitee.invitacion_enviada ?? false,
         mensaje: null,
         restriccion_alimentaria: null,
         cancion_recomendada: null,
@@ -388,8 +419,10 @@ export default function Footer() {
     }
   };
 
-  const sendInvites = () => {
+  const sendInvites = async () => {
     if (!selectedInvitees.length) return;
+
+    const selectedIdsToMark = selectedInvitees.map((invitee) => invitee.id);
 
     selectedInvitees.forEach((invitee) => {
       const phone = normalizePhone(invitee.telefono ?? null);
@@ -404,6 +437,21 @@ export default function Footer() {
       const url = `https://wa.me/${phone}?text=${message}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     });
+
+    const { error } = await supabase
+      .from('rsvp')
+      .update({ invitacion_enviada: true })
+      .in('id', selectedIdsToMark);
+
+    if (!error) {
+      setInvitees((current) =>
+        current.map((invitee) =>
+          selectedIdsToMark.includes(invitee.id)
+            ? { ...invitee, invitacion_enviada: true }
+            : invitee
+        )
+      );
+    }
   };
 
   const exportInvitees = () => {
@@ -518,7 +566,7 @@ export default function Footer() {
     }
   };
 
-  const sendFamilyGroup = (groupName: string) => {
+  const sendFamilyGroup = async (groupName: string) => {
     const groupInvitees = invitees.filter(
       (invitee) =>
         [invitee.familia, invitee.lista, invitee.grupo].filter(Boolean).includes(groupName)
@@ -533,6 +581,22 @@ export default function Footer() {
       const url = `https://wa.me/${phone}?text=${message}`;
       window.open(url, '_blank', 'noopener,noreferrer');
     });
+
+    if (!groupInvitees.length) return;
+
+    const targetIds = groupInvitees.map((invitee) => invitee.id);
+    const { error } = await supabase
+      .from('rsvp')
+      .update({ invitacion_enviada: true })
+      .in('id', targetIds);
+
+    if (!error) {
+      setInvitees((current) =>
+        current.map((invitee) =>
+          targetIds.includes(invitee.id) ? { ...invitee, invitacion_enviada: true } : invitee
+        )
+      );
+    }
   };
 
   const handleLogin = (event: React.FormEvent<HTMLFormElement>) => {
@@ -896,9 +960,17 @@ export default function Footer() {
                   {filteredInvitees.map((invitee) => {
                     const isSelected = selectedIds.includes(invitee.id);
                     const isEditing = editingId === invitee.id;
+                    const isConfirmed = invitee.asistira === true;
 
                     return (
-                      <li key={invitee.id} className="p-3">
+                      <li
+                        key={invitee.id}
+                        className={`rounded-2xl border p-3 transition-colors ${
+                          isConfirmed
+                            ? 'border-[#d4b483] bg-[#f8f2e7] shadow-sm'
+                            : 'border-transparent bg-white'
+                        }`}
+                      >
                         <div className="flex items-start justify-between gap-3">
                           <button
                             type="button"
@@ -907,9 +979,17 @@ export default function Footer() {
                           >
                             <div className="flex items-center justify-between gap-3">
                               <span className="font-medium">{invitee.nombre}</span>
-                              <span className="text-xs uppercase tracking-[0.18em] text-[#b08968]">
-                                {invitee.asistira ? 'Asiste' : 'No asiste'}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.2em] ${
+                                    isConfirmed
+                                      ? 'bg-[#e8f0e4] text-[#4f6c3c]'
+                                      : 'bg-[#f2e9e1] text-[#8a6a52]'
+                                  }`}
+                                >
+                                  {isConfirmed ? 'Confirmado' : 'Pendiente'}
+                                </span>
+                              </div>
                             </div>
                             <div className="mt-1 text-xs text-[#7c5e3c]">
                               {invitee.mesa ? `Mesa ${invitee.mesa} • ` : 'Sin mesa • '}
@@ -917,13 +997,33 @@ export default function Footer() {
                               {invitee.email ? ` • ${invitee.email}` : ''}
                             </div>
                           </button>
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleInvitee(invitee.id)}
-                              className="h-4 w-4 accent-[#b08968]"
-                            />
+                          <div className="flex flex-col items-end gap-2">
+                            <label className="flex items-center gap-2 rounded-full border border-[#d4b483]/35 bg-[#fffdf9] px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-[#5d4b3a]">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleInvitee(invitee.id)}
+                                className="h-4 w-4 accent-[#b08968]"
+                              />
+                              Seleccionar
+                            </label>
+                            <label
+                              className={`flex items-center gap-2 rounded-full border px-2 py-1 text-[9px] uppercase tracking-[0.18em] ${
+                                invitee.invitacion_enviada
+                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                  : 'border-amber-200 bg-amber-50 text-amber-700'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={Boolean(invitee.invitacion_enviada)}
+                                onChange={() => void toggleInvitationSent(invitee)}
+                                className={`h-4 w-4 ${
+                                  invitee.invitacion_enviada ? 'accent-emerald-600' : 'accent-amber-600'
+                                }`}
+                              />
+                              {invitee.invitacion_enviada ? 'Invitación enviada' : 'Envío pendiente'}
+                            </label>
                           </div>
                         </div>
 
@@ -1022,7 +1122,7 @@ export default function Footer() {
                                   }
                                   className="h-4 w-4 accent-[#b08968]"
                                 />
-                                Asiste
+                                Seleccionar
                               </label>
                               <div className="flex gap-2">
                                 <button

@@ -30,18 +30,48 @@ export default function RsvpForm() {
     setStatus('loading');
     setErrorMsg('');
 
+    const nombre = form.nombre.trim();
+    if (!nombre) {
+      setStatus('error');
+      setErrorMsg('Ingresá tu nombre y apellido para confirmar tu asistencia.');
+      return;
+    }
+
     const payload: Omit<Rsvp, 'id' | 'created_at'> = {
-      nombre: form.nombre.trim(),
+      nombre,
       email: form.email.trim(),
       telefono: form.telefono.trim() || null,
       asistira: form.asistira,
       cantidad_acompanantes: form.cantidad_acompanantes,
+      mesa: null,
+      familia: null,
+      lista: null,
+      grupo: null,
+      invitacion_enviada: false,
       mensaje: form.mensaje.trim() || null,
       restriccion_alimentaria: form.restriccion_alimentaria.trim() || null,
       cancion_recomendada: form.cancion_recomendada.trim() || null,
     };
 
-    const { error } = await supabase.from('rsvp').insert(payload);
+    const { data: existingRows, error: fetchError } = await supabase
+      .from('rsvp')
+      .select('*')
+      .ilike('nombre', nombre)
+      .limit(1);
+
+    if (fetchError) {
+      setStatus('error');
+      setErrorMsg(
+        'No pudimos guardar tu confirmación. Por favor, intentá nuevamente en unos momentos.'
+      );
+      return;
+    }
+
+    const existing = existingRows?.[0];
+
+    const { error } = existing
+      ? await supabase.from('rsvp').update(payload).eq('id', existing.id)
+      : await supabase.from('rsvp').insert(payload);
 
     if (error) {
       setStatus('error');
@@ -51,6 +81,7 @@ export default function RsvpForm() {
       return;
     }
 
+    window.dispatchEvent(new CustomEvent('rsvp-updated'));
     setStatus('success');
   };
 

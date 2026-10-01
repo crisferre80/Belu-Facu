@@ -18,7 +18,7 @@ export const weddingConfig = {
   welcomeText:
     'Nos emociona enormemente compartir este día tan especial contigo. Tu presencia es el mejor regalo que podemos recibir.',
   storyText:
-    'Belén y Facundo se conocieron una tarde de otoño en 2021. Lo que comenzó como una charla casual sobre libros en un café del centro, se transformó en una historia de amor que ya no se detuvo. Cada día juntos fue un capítulo nuevo: viajes, risas, proyectos y sueños compartidos. Hoy, casi seis años después, decidieron dar el gran paso y jurarse amor eterno rodeados de las personas que más aman.',
+    'EL AMOR NOS ELIGIÓ Y NOSOTROS NOS ELEGIMOS PARA SIEMPRE. Con nuestros corazones llenos de ilusión, queremos compartir con ustedes el comienzo de nuestra vida juntos. Los esperamos para celebrar nuestro amor.',
   galleryImages: [
     'editada11byn.jpg',
     '_MG_0020.JPG',
