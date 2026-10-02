@@ -39,7 +39,7 @@ export default function Navbar() {
         </a>
 
         {/* Links desktop */}
-        <div className="hidden gap-8 md:flex">
+        <div className="hidden items-center gap-8 md:flex">
           {links.map((link) => (
             <a
               key={link.href}
@@ -51,6 +51,14 @@ export default function Navbar() {
               {link.label}
             </a>
           ))}
+          <a
+            href="#/admin"
+            className={`text-[10px] uppercase tracking-[0.28em] transition-colors hover:text-[#d4b483] ${
+              scrolled ? 'text-[#7c5e3c]' : 'text-[#faf6ef]/90'
+            }`}
+          >
+            Admin
+          </a>
         </div>
 
         {/* Botón mobile */}
@@ -82,6 +90,13 @@ export default function Navbar() {
                   {link.label}
                 </a>
               ))}
+              <a
+                href="#/admin"
+                onClick={() => setOpen(false)}
+                className="mt-1 border-t border-[#e6d5b8]/70 pt-3 text-sm uppercase tracking-[0.2em] text-[#5e4630] transition-colors hover:text-[#d4b483]"
+              >
+                Admin
+              </a>
             </div>
           </div>
         </div>

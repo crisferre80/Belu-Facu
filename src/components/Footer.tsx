@@ -71,7 +71,11 @@ const formatMessage = (nombre: string, customText: string, familyName?: string |
   );
 };
 
-export default function Footer() {
+type FooterProps = {
+  adminOnly?: boolean;
+};
+
+export default function Footer({ adminOnly = false }: FooterProps) {
   const [adminOpen, setAdminOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
@@ -689,8 +693,644 @@ export default function Footer() {
     setLoginError('Usuario o contraseña incorrectos.');
   };
 
+  const adminVehicle = (
+    <div className="w-full text-left">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-[#3a3022]">
+          <Users className="h-5 w-5 text-[#b08968]" />
+          <h3 className="text-lg font-semibold">Panel de invitados</h3>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowNewInviteeForm((value) => !value)}
+            className="rounded-full bg-[#2a2418] px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+          >
+            {showNewInviteeForm ? 'Cerrar' : 'Nuevo invitado'}
+          </button>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d4b483]/35 bg-white px-2.5 py-2 text-xs font-medium text-[#3a3022]">
+            <Upload className="h-4 w-4" />
+            Import Excel
+            <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileImport} />
+          </label>
+          {adminOnly && (
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '';
+              }}
+              className="rounded-full border border-[#d4b483]/35 bg-white px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-[#3a3022]"
+            >
+              Volver
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showNewInviteeForm && (
+        <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#3a3022]">Agregar invitado</h4>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+              Nombre
+              <input
+                type="text"
+                value={newInvitee.nombre}
+                onChange={(e) => setNewInvitee((current) => ({ ...current, nombre: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+              />
+            </label>
+            <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+              Email
+              <input
+                type="email"
+                value={newInvitee.email}
+                onChange={(e) => setNewInvitee((current) => ({ ...current, email: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+              />
+            </label>
+            <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+              Teléfono
+              <input
+                type="text"
+                value={newInvitee.telefono}
+                onChange={(e) => setNewInvitee((current) => ({ ...current, telefono: e.target.value }))}
+                className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+              />
+            </label>
+            <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+              Mesa
+              <select
+                value={newInvitee.mesa ?? ''}
+                onChange={(e) =>
+                  setNewInvitee((current) => ({
+                    ...current,
+                    mesa: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+                className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+              >
+                <option value="">Sin mesa</option>
+                {Array.from({ length: TABLE_COUNT }, (_, index) => (
+                  <option key={index + 1} value={index + 1}>
+                    Mesa {index + 1}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c] sm:col-span-2">
+              Familia / lista
+              <input
+                type="text"
+                value={newInvitee.familia || newInvitee.lista || ''}
+                onChange={(e) =>
+                  setNewInvitee((current) => ({
+                    ...current,
+                    familia: e.target.value,
+                    lista: e.target.value,
+                    grupo: e.target.value,
+                  }))
+                }
+                className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+              />
+            </label>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+              <input
+                type="checkbox"
+                checked={newInvitee.asistira}
+                onChange={(e) => setNewInvitee((current) => ({ ...current, asistira: e.target.checked }))}
+                className="h-4 w-4 accent-[#b08968]"
+              />
+              Confirma asistencia
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={createInvitee}
+                className="rounded-full bg-[#2a2418] px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+              >
+                Guardar
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowNewInviteeForm(false)}
+                className="rounded-full border border-[#d4b483]/30 bg-white px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-4 rounded-2xl border border-[#e6d5b8] bg-white p-3">
+        <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+          Mensaje personalizado
+        </label>
+        <textarea
+          value={customText}
+          onChange={(e) => setCustomText(e.target.value)}
+          rows={4}
+          className="w-full resize-none rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+        />
+      </div>
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Total</p>
+          <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.total}</p>
+        </div>
+        <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Confirman</p>
+          <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.confirmed}</p>
+        </div>
+        <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Pendientes</p>
+          <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.pending}</p>
+        </div>
+        <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Familias</p>
+          <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.families}</p>
+        </div>
+        <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Mesas</p>
+          <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.tables}</p>
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
+        <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto_auto] md:items-end">
+          <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+            Buscar invitado
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Nombre, teléfono o familia"
+              className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+            />
+          </label>
+
+          <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+            Familia
+            <select
+              value={filterFamily}
+              onChange={(e) => setFilterFamily(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+            >
+              <option value="all">Todas</option>
+              {familyGroups.map(({ name }) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+            Mesa
+            <select
+              value={filterMesa}
+              onChange={(e) => setFilterMesa(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+            >
+              <option value="all">Todas</option>
+              {Array.from({ length: TABLE_COUNT }, (_, index) => (
+                <option key={index + 1} value={String(index + 1)}>
+                  Mesa {index + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex items-center gap-2 rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+            <input
+              type="checkbox"
+              checked={showOnlyConfirmed}
+              onChange={(e) => setShowOnlyConfirmed(e.target.checked)}
+              className="h-4 w-4 accent-[#b08968]"
+            />
+            Confirman
+          </label>
+
+          <button
+            type="button"
+            onClick={exportInvitees}
+            className="rounded-full bg-[#2a2418] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+          >
+            Export Excel
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-4 flex items-center justify-between">
+        <span className="text-sm text-[#7c5e3c]">
+          {selectedInvitees.length} seleccionados
+        </span>
+        <button
+          type="button"
+          onClick={sendInvites}
+          className="inline-flex items-center gap-2 rounded-full bg-[#2a2418] px-4 py-2 text-xs font-medium uppercase tracking-[0.25em] text-[#f9f4ee] transition hover:bg-[#3b3128]"
+        >
+          <Send className="h-4 w-4" />
+          Enviar WhatsApp
+        </button>
+      </div>
+
+      <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="flex-1 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+            Crear lista / familia
+            <input
+              type="text"
+              value={familyName}
+              onChange={(e) => setFamilyName(e.target.value)}
+              placeholder="Ej: Familia Pérez"
+              className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => assignFamilyToSelection(familyName)}
+            className="rounded-full bg-[#2a2418] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+          >
+            Guardar grupo
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {familyGroups.map(({ name, invitees: groupInvitees }) => {
+            const isActive = selectedFamily === name;
+            return (
+              <div key={name} className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFamily(isActive ? null : name)}
+                  className={`rounded-full border px-2.5 py-1.5 text-[10px] uppercase tracking-[0.2em] ${
+                    isActive
+                      ? 'border-[#b08968] bg-[#f6ebde] text-[#3a3022]'
+                      : 'border-[#d4b483]/30 bg-[#f8f0e2] text-[#4d3d2a]'
+                  }`}
+                >
+                  {name} ({groupInvitees.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => sendFamilyGroup(name)}
+                  className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-emerald-700"
+                  title="Enviar WhatsApp a esta familia"
+                >
+                  WA
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        {selectedFamily && (
+          <div className="mt-4 rounded-2xl border border-[#eadcc1] bg-[#fffaf2] p-3">
+            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#3a3022]">
+                Miembros de {selectedFamily}
+              </h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  defaultValue={selectedFamily}
+                  onBlur={(e) => renameFamilyGroup(selectedFamily, e.target.value)}
+                  className="w-36 rounded-lg border border-[#e0d0b0] bg-white px-2 py-1 text-xs text-[#3a3022] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={() => deleteFamilyGroup(selectedFamily)}
+                  className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] text-red-700"
+                >
+                  Borrar
+                </button>
+              </div>
+            </div>
+
+            <ul className="space-y-1 text-sm text-[#5d4b3a]">
+              {selectedFamilyMembers.length === 0 ? (
+                <li className="text-[#7c5e3c]">No hay miembros cargados.</li>
+              ) : (
+                selectedFamilyMembers.map((member) => (
+                  <li key={member.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-2 py-1.5">
+                    <span>{member.nombre}</span>
+                    <span className="text-xs text-[#7c5e3c]">Mesa {member.mesa ?? '—'}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {tableGroups.map(({ mesa, invitees: mesaInvitees }) => (
+          <div
+            key={mesa}
+            className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center shadow-sm"
+          >
+            <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Mesa</p>
+            <p className="mt-2 text-xl font-semibold text-[#2a2418]">{mesa}</p>
+            <p className="mt-1 text-xs text-[#7c5e3c]">{mesaInvitees.length} invitado{mesaInvitees.length === 1 ? '' : 's'}</p>
+          </div>
+        ))}
+      </div>
+
+      {importMessage && (
+        <div className="mb-4 rounded-xl border border-[#d4b483]/30 bg-[#fff8ee] px-3 py-2 text-sm text-[#5f4735]">
+          {importMessage}
+        </div>
+      )}
+
+      <div className="max-h-80 overflow-auto rounded-2xl border border-[#e6d5b8] bg-white">
+        {isLoading ? (
+          <div className="p-4 text-sm text-[#7c5e3c]">Cargando invitados…</div>
+        ) : filteredInvitees.length === 0 ? (
+          <div className="p-4 text-sm text-[#7c5e3c]">
+            {invitees.length === 0 ? 'Todavía no hay invitados cargados.' : 'No hay invitados con esos filtros.'}
+          </div>
+        ) : (
+          <ul className="divide-y divide-[#f2e7d8]">
+            {filteredInvitees.map((invitee) => {
+              const isSelected = selectedIds.includes(invitee.id);
+              const isEditing = editingId === invitee.id;
+              const isConfirmed = invitee.asistira === true;
+
+              return (
+                <li
+                  key={invitee.id}
+                  className={`rounded-2xl border p-3 transition-colors ${
+                    isConfirmed
+                      ? 'border-[#d4b483] bg-[#f8f2e7] shadow-sm'
+                      : 'border-transparent bg-white'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleInvitee(invitee.id)}
+                      className={`flex-1 text-left ${isSelected ? 'text-[#3a3022]' : 'text-[#5d4b3a]'}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium">{invitee.nombre}</span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.2em] ${
+                              isConfirmed
+                                ? 'bg-[#e8f0e4] text-[#4f6c3c]'
+                                : 'bg-[#f2e9e1] text-[#8a6a52]'
+                            }`}
+                          >
+                            {isConfirmed ? 'Confirmado' : 'Pendiente'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-1 text-xs text-[#7c5e3c]">
+                        {invitee.mesa ? `Mesa ${invitee.mesa} • ` : 'Sin mesa • '}
+                        {invitee.telefono ? invitee.telefono : 'Sin teléfono'}
+                        {invitee.email ? ` • ${invitee.email}` : ''}
+                      </div>
+                    </button>
+                    <div className="flex flex-col items-end gap-2">
+                      <label className="flex items-center gap-2 rounded-full border border-[#d4b483]/35 bg-[#fffdf9] px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-[#5d4b3a]">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleInvitee(invitee.id)}
+                          className="h-4 w-4 accent-[#b08968]"
+                        />
+                        Seleccionar
+                      </label>
+                      <label
+                        className={`flex items-center gap-2 rounded-full border px-2 py-1 text-[9px] uppercase tracking-[0.18em] ${
+                          invitee.invitacion_enviada
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-amber-200 bg-amber-50 text-amber-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={Boolean(invitee.invitacion_enviada)}
+                          onChange={() => void toggleInvitationSent(invitee)}
+                          className={`h-4 w-4 ${
+                            invitee.invitacion_enviada ? 'accent-emerald-600' : 'accent-amber-600'
+                          }`}
+                        />
+                        {invitee.invitacion_enviada ? 'Invitación enviada' : 'Envío pendiente'}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startEditing(invitee)}
+                      className="rounded-full border border-[#d4b483]/30 bg-[#f4ebdf] px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteInvitee(invitee.id)}
+                      className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-red-700"
+                    >
+                      Borrar
+                    </button>
+                  </div>
+
+                  {isEditing && (
+                    <div className="mt-3 rounded-2xl border border-[#e0d0b0] bg-[#fffdf9] p-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                          Nombre
+                          <input
+                            type="text"
+                            value={draftInvitee.nombre}
+                            onChange={(e) => setDraftInvitee((current) => ({ ...current, nombre: e.target.value }))}
+                            className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                          />
+                        </label>
+                        <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                          Email
+                          <input
+                            type="email"
+                            value={draftInvitee.email}
+                            onChange={(e) => setDraftInvitee((current) => ({ ...current, email: e.target.value }))}
+                            className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                          />
+                        </label>
+                        <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                          Teléfono
+                          <input
+                            type="text"
+                            value={draftInvitee.telefono}
+                            onChange={(e) => setDraftInvitee((current) => ({ ...current, telefono: e.target.value }))}
+                            className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                          />
+                        </label>
+                        <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                          Mesa
+                          <select
+                            value={draftInvitee.mesa ?? ''}
+                            onChange={(e) =>
+                              setDraftInvitee((current) => ({
+                                ...current,
+                                mesa: e.target.value === '' ? null : Number(e.target.value),
+                              }))
+                            }
+                            className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                          >
+                            <option value="">Sin mesa</option>
+                            {Array.from({ length: TABLE_COUNT }, (_, index) => (
+                              <option key={index + 1} value={index + 1}>
+                                Mesa {index + 1}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                          Familia / lista
+                          <input
+                            type="text"
+                            value={draftInvitee.familia || draftInvitee.lista || ''}
+                            onChange={(e) =>
+                              setDraftInvitee((current) => ({
+                                ...current,
+                                familia: e.target.value,
+                                lista: e.target.value,
+                                grupo: e.target.value,
+                              }))
+                            }
+                            className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                          <input
+                            type="checkbox"
+                            checked={draftInvitee.asistira}
+                            onChange={(e) =>
+                              setDraftInvitee((current) => ({ ...current, asistira: e.target.checked }))
+                            }
+                            className="h-4 w-4 accent-[#b08968]"
+                          />
+                          Seleccionar
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={saveInvitee}
+                            className="rounded-full bg-[#2a2418] px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+                          >
+                            Guardar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="rounded-full border border-[#d4b483]/30 bg-white px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+
+  if (adminOnly) {
+    return (
+      <div className="min-h-screen bg-[#2a2418] px-4 py-8 text-[#f9f4ee]">
+        <div className="mx-auto max-w-6xl rounded-[2rem] border border-[#d4b483]/20 bg-[#f8f1e7] p-4 text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)] sm:p-6">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-[#7c5e3c]">Acceso</p>
+              <h2 className="text-2xl font-semibold text-[#2a2418]">Panel administrativo</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '';
+              }}
+              className="rounded-full border border-[#d4b483]/40 bg-[#2a2418] px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+            >
+              Volver a invitación
+            </button>
+          </div>
+
+          {!isAuthenticated ? (
+            <div className="mx-auto max-w-md rounded-[2rem] border border-[#d4b483]/25 bg-[#f8f1e7] p-4 text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)] sm:p-6">
+              <div className="mb-4 flex items-center justify-center gap-2 text-[#3a3022]">
+                <LockKeyhole className="h-5 w-5 text-[#b08968]" />
+                <h3 className="text-lg font-semibold">Acceso administrativo</h3>
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    Usuario
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    placeholder="admin"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {loginError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {loginError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full rounded-full bg-[#2a2418] px-4 py-3 text-xs font-medium uppercase tracking-[0.25em] text-[#f9f4ee] transition hover:bg-[#3b3128]"
+                >
+                  Ingresar
+                </button>
+              </form>
+            </div>
+          ) : (
+            adminVehicle
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <footer className="relative overflow-hidden bg-[#2a2418] py-20 text-center">
+    <footer className="relative bg-[#2a2418] py-20 text-center">
       <div className="absolute inset-0 opacity-5">
         <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full border-[40px] border-[#d4b483]" />
       </div>
@@ -723,622 +1363,6 @@ export default function Footer() {
           <Mail className="h-4 w-4" />
           {weddingConfig.email}
         </a>
-
-        <div className="mt-10 border-t border-[#d4b483]/20 pt-8">
-          <button
-            type="button"
-            onClick={() => {
-              if (!isAuthenticated) {
-                setAdminOpen((value) => !value);
-                return;
-              }
-              setAdminOpen((value) => !value);
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-[#d4b483]/40 bg-[#2f261d] px-3 py-2 text-[10px] uppercase tracking-[0.35em] text-[#d4b483] transition hover:border-[#d4b483]"
-          >
-            {adminOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            Admin
-          </button>
-        </div>
-
-        {adminOpen && !isAuthenticated && (
-          <div className="mt-6 rounded-[2rem] border border-[#d4b483]/25 bg-[#f8f1e7] p-4 text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)] sm:p-6">
-            <div className="mb-4 flex items-center justify-center gap-2 text-[#3a3022]">
-              <LockKeyhole className="h-5 w-5 text-[#b08968]" />
-              <h3 className="text-lg font-semibold">Acceso administrativo</h3>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  Usuario
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                  placeholder="admin"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  Contraseña
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              {loginError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {loginError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="w-full rounded-full bg-[#2a2418] px-4 py-3 text-xs font-medium uppercase tracking-[0.25em] text-[#f9f4ee] transition hover:bg-[#3b3128]"
-              >
-                Ingresar
-              </button>
-            </form>
-          </div>
-        )}
-
-        {isAuthenticated && adminOpen && (
-          <div className="mt-6 rounded-[2rem] border border-[#d4b483]/25 bg-[#f8f1e7] p-4 text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)] sm:p-6">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-[#3a3022]">
-                <Users className="h-5 w-5 text-[#b08968]" />
-                <h3 className="text-lg font-semibold">Panel de invitados</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNewInviteeForm((value) => !value)}
-                  className="rounded-full bg-[#2a2418] px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
-                >
-                  {showNewInviteeForm ? 'Cerrar' : 'Nuevo invitado'}
-                </button>
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d4b483]/35 bg-white px-2.5 py-2 text-xs font-medium text-[#3a3022]">
-                  <Upload className="h-4 w-4" />
-                  Import Excel
-                  <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileImport} />
-                </label>
-              </div>
-            </div>
-
-            {showNewInviteeForm && (
-              <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#3a3022]">Agregar invitado</h4>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                    Nombre
-                    <input
-                      type="text"
-                      value={newInvitee.nombre}
-                      onChange={(e) => setNewInvitee((current) => ({ ...current, nombre: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                    />
-                  </label>
-                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                    Email
-                    <input
-                      type="email"
-                      value={newInvitee.email}
-                      onChange={(e) => setNewInvitee((current) => ({ ...current, email: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                    />
-                  </label>
-                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                    Teléfono
-                    <input
-                      type="text"
-                      value={newInvitee.telefono}
-                      onChange={(e) => setNewInvitee((current) => ({ ...current, telefono: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                    />
-                  </label>
-                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                    Mesa
-                    <select
-                      value={newInvitee.mesa ?? ''}
-                      onChange={(e) =>
-                        setNewInvitee((current) => ({
-                          ...current,
-                          mesa: e.target.value === '' ? null : Number(e.target.value),
-                        }))
-                      }
-                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                    >
-                      <option value="">Sin mesa</option>
-                      {Array.from({ length: TABLE_COUNT }, (_, index) => (
-                        <option key={index + 1} value={index + 1}>
-                          Mesa {index + 1}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c] sm:col-span-2">
-                    Familia / lista
-                    <input
-                      type="text"
-                      value={newInvitee.familia || newInvitee.lista || ''}
-                      onChange={(e) =>
-                        setNewInvitee((current) => ({
-                          ...current,
-                          familia: e.target.value,
-                          lista: e.target.value,
-                          grupo: e.target.value,
-                        }))
-                      }
-                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                    />
-                  </label>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                    <input
-                      type="checkbox"
-                      checked={newInvitee.asistira}
-                      onChange={(e) => setNewInvitee((current) => ({ ...current, asistira: e.target.checked }))}
-                      className="h-4 w-4 accent-[#b08968]"
-                    />
-                    Confirma asistencia
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={createInvitee}
-                      className="rounded-full bg-[#2a2418] px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
-                    >
-                      Guardar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewInviteeForm(false)}
-                      className="rounded-full border border-[#d4b483]/30 bg-white px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="mb-4 rounded-2xl border border-[#e6d5b8] bg-white p-3">
-              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                Mensaje personalizado
-              </label>
-              <textarea
-                value={customText}
-                onChange={(e) => setCustomText(e.target.value)}
-                rows={4}
-                className="w-full resize-none rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-              />
-            </div>
-
-            <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Total</p>
-                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.total}</p>
-              </div>
-              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Confirman</p>
-                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.confirmed}</p>
-              </div>
-              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Pendientes</p>
-                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.pending}</p>
-              </div>
-              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Familias</p>
-                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.families}</p>
-              </div>
-              <div className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Mesas</p>
-                <p className="mt-2 text-2xl font-semibold text-[#2a2418]">{adminSummary.tables}</p>
-              </div>
-            </div>
-
-            <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
-              <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto_auto] md:items-end">
-                <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  Buscar invitado
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Nombre, teléfono o familia"
-                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                  />
-                </label>
-
-                <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  Familia
-                  <select
-                    value={filterFamily}
-                    onChange={(e) => setFilterFamily(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                  >
-                    <option value="all">Todas</option>
-                    {familyGroups.map(({ name }) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  Mesa
-                  <select
-                    value={filterMesa}
-                    onChange={(e) => setFilterMesa(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                  >
-                    <option value="all">Todas</option>
-                    {Array.from({ length: TABLE_COUNT }, (_, index) => (
-                      <option key={index + 1} value={String(index + 1)}>
-                        Mesa {index + 1}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="flex items-center gap-2 rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  <input
-                    type="checkbox"
-                    checked={showOnlyConfirmed}
-                    onChange={(e) => setShowOnlyConfirmed(e.target.checked)}
-                    className="h-4 w-4 accent-[#b08968]"
-                  />
-                  Confirman
-                </label>
-
-                <button
-                  type="button"
-                  onClick={exportInvitees}
-                  className="rounded-full bg-[#2a2418] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
-                >
-                  Export Excel
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm text-[#7c5e3c]">
-                {selectedInvitees.length} seleccionados
-              </span>
-              <button
-                type="button"
-                onClick={sendInvites}
-                className="inline-flex items-center gap-2 rounded-full bg-[#2a2418] px-4 py-2 text-xs font-medium uppercase tracking-[0.25em] text-[#f9f4ee] transition hover:bg-[#3b3128]"
-              >
-                <Send className="h-4 w-4" />
-                Enviar WhatsApp
-              </button>
-            </div>
-
-            <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
-              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-                <label className="flex-1 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                  Crear lista / familia
-                  <input
-                    type="text"
-                    value={familyName}
-                    onChange={(e) => setFamilyName(e.target.value)}
-                    placeholder="Ej: Familia Pérez"
-                    className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => assignFamilyToSelection(familyName)}
-                  className="rounded-full bg-[#2a2418] px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
-                >
-                  Guardar grupo
-                </button>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {familyGroups.map(({ name, invitees: groupInvitees }) => {
-                  const isActive = selectedFamily === name;
-                  return (
-                    <div key={name} className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFamily(isActive ? null : name)}
-                        className={`rounded-full border px-2.5 py-1.5 text-[10px] uppercase tracking-[0.2em] ${
-                          isActive
-                            ? 'border-[#b08968] bg-[#f6ebde] text-[#3a3022]'
-                            : 'border-[#d4b483]/30 bg-[#f8f0e2] text-[#4d3d2a]'
-                        }`}
-                      >
-                        {name} ({groupInvitees.length})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => sendFamilyGroup(name)}
-                        className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] uppercase tracking-[0.16em] text-emerald-700"
-                        title="Enviar WhatsApp a esta familia"
-                      >
-                        WA
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {selectedFamily && (
-                <div className="mt-4 rounded-2xl border border-[#eadcc1] bg-[#fffaf2] p-3">
-                  <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#3a3022]">
-                      Miembros de {selectedFamily}
-                    </h4>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        defaultValue={selectedFamily}
-                        onBlur={(e) => renameFamilyGroup(selectedFamily, e.target.value)}
-                        className="w-36 rounded-lg border border-[#e0d0b0] bg-white px-2 py-1 text-xs text-[#3a3022] outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => deleteFamilyGroup(selectedFamily)}
-                        className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] text-red-700"
-                      >
-                        Borrar
-                      </button>
-                    </div>
-                  </div>
-
-                  <ul className="space-y-1 text-sm text-[#5d4b3a]">
-                    {selectedFamilyMembers.length === 0 ? (
-                      <li className="text-[#7c5e3c]">No hay miembros cargados.</li>
-                    ) : (
-                      selectedFamilyMembers.map((member) => (
-                        <li key={member.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-2 py-1.5">
-                          <span>{member.nombre}</span>
-                          <span className="text-xs text-[#7c5e3c]">Mesa {member.mesa ?? '—'}</span>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </div>
-              )}
-            </div>
-
-            <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {tableGroups.map(({ mesa, invitees: mesaInvitees }) => (
-                <div
-                  key={mesa}
-                  className="rounded-2xl border border-[#d7c6a7] bg-[#fffaf2] p-3 text-center shadow-sm"
-                >
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c]">Mesa</p>
-                  <p className="mt-2 text-xl font-semibold text-[#2a2418]">{mesa}</p>
-                  <p className="mt-1 text-xs text-[#7c5e3c]">{mesaInvitees.length} invitado{mesaInvitees.length === 1 ? '' : 's'}</p>
-                </div>
-              ))}
-            </div>
-
-            {importMessage && (
-              <div className="mb-4 rounded-xl border border-[#d4b483]/30 bg-[#fff8ee] px-3 py-2 text-sm text-[#5f4735]">
-                {importMessage}
-              </div>
-            )}
-
-            <div className="max-h-80 overflow-auto rounded-2xl border border-[#e6d5b8] bg-white">
-              {isLoading ? (
-                <div className="p-4 text-sm text-[#7c5e3c]">Cargando invitados…</div>
-              ) : filteredInvitees.length === 0 ? (
-                <div className="p-4 text-sm text-[#7c5e3c]">
-                  {invitees.length === 0 ? 'Todavía no hay invitados cargados.' : 'No hay invitados con esos filtros.'}
-                </div>
-              ) : (
-                <ul className="divide-y divide-[#f2e7d8]">
-                  {filteredInvitees.map((invitee) => {
-                    const isSelected = selectedIds.includes(invitee.id);
-                    const isEditing = editingId === invitee.id;
-                    const isConfirmed = invitee.asistira === true;
-
-                    return (
-                      <li
-                        key={invitee.id}
-                        className={`rounded-2xl border p-3 transition-colors ${
-                          isConfirmed
-                            ? 'border-[#d4b483] bg-[#f8f2e7] shadow-sm'
-                            : 'border-transparent bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <button
-                            type="button"
-                            onClick={() => toggleInvitee(invitee.id)}
-                            className={`flex-1 text-left ${isSelected ? 'text-[#3a3022]' : 'text-[#5d4b3a]'}`}
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="font-medium">{invitee.nombre}</span>
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.2em] ${
-                                    isConfirmed
-                                      ? 'bg-[#e8f0e4] text-[#4f6c3c]'
-                                      : 'bg-[#f2e9e1] text-[#8a6a52]'
-                                  }`}
-                                >
-                                  {isConfirmed ? 'Confirmado' : 'Pendiente'}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="mt-1 text-xs text-[#7c5e3c]">
-                              {invitee.mesa ? `Mesa ${invitee.mesa} • ` : 'Sin mesa • '}
-                              {invitee.telefono ? invitee.telefono : 'Sin teléfono'}
-                              {invitee.email ? ` • ${invitee.email}` : ''}
-                            </div>
-                          </button>
-                          <div className="flex flex-col items-end gap-2">
-                            <label className="flex items-center gap-2 rounded-full border border-[#d4b483]/35 bg-[#fffdf9] px-2 py-1 text-[9px] uppercase tracking-[0.18em] text-[#5d4b3a]">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleInvitee(invitee.id)}
-                                className="h-4 w-4 accent-[#b08968]"
-                              />
-                              Seleccionar
-                            </label>
-                            <label
-                              className={`flex items-center gap-2 rounded-full border px-2 py-1 text-[9px] uppercase tracking-[0.18em] ${
-                                invitee.invitacion_enviada
-                                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                                  : 'border-amber-200 bg-amber-50 text-amber-700'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={Boolean(invitee.invitacion_enviada)}
-                                onChange={() => void toggleInvitationSent(invitee)}
-                                className={`h-4 w-4 ${
-                                  invitee.invitacion_enviada ? 'accent-emerald-600' : 'accent-amber-600'
-                                }`}
-                              />
-                              {invitee.invitacion_enviada ? 'Invitación enviada' : 'Envío pendiente'}
-                            </label>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => startEditing(invitee)}
-                            className="rounded-full border border-[#d4b483]/30 bg-[#f4ebdf] px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
-                          >
-                            Editar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => deleteInvitee(invitee.id)}
-                            className="rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] uppercase tracking-[0.2em] text-red-700"
-                          >
-                            Borrar
-                          </button>
-                        </div>
-
-                        {isEditing && (
-                          <div className="mt-3 rounded-2xl border border-[#e0d0b0] bg-[#fffdf9] p-3">
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                                Nombre
-                                <input
-                                  type="text"
-                                  value={draftInvitee.nombre}
-                                  onChange={(e) => setDraftInvitee((current) => ({ ...current, nombre: e.target.value }))}
-                                  className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                                />
-                              </label>
-                              <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                                Email
-                                <input
-                                  type="email"
-                                  value={draftInvitee.email}
-                                  onChange={(e) => setDraftInvitee((current) => ({ ...current, email: e.target.value }))}
-                                  className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                                />
-                              </label>
-                              <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                                Teléfono
-                                <input
-                                  type="text"
-                                  value={draftInvitee.telefono}
-                                  onChange={(e) => setDraftInvitee((current) => ({ ...current, telefono: e.target.value }))}
-                                  className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                                />
-                              </label>
-                              <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                                Mesa
-                                <select
-                                  value={draftInvitee.mesa ?? ''}
-                                  onChange={(e) =>
-                                    setDraftInvitee((current) => ({
-                                      ...current,
-                                      mesa: e.target.value === '' ? null : Number(e.target.value),
-                                    }))
-                                  }
-                                  className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                                >
-                                  <option value="">Sin mesa</option>
-                                  {Array.from({ length: TABLE_COUNT }, (_, index) => (
-                                    <option key={index + 1} value={index + 1}>
-                                      Mesa {index + 1}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
-                              <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                                Familia / lista
-                                <input
-                                  type="text"
-                                  value={draftInvitee.familia || draftInvitee.lista || ''}
-                                  onChange={(e) =>
-                                    setDraftInvitee((current) => ({
-                                      ...current,
-                                      familia: e.target.value,
-                                      lista: e.target.value,
-                                      grupo: e.target.value,
-                                    }))
-                                  }
-                                  className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-white px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
-                                />
-                              </label>
-                            </div>
-
-                            <div className="mt-3 flex items-center justify-between gap-2">
-                              <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
-                                <input
-                                  type="checkbox"
-                                  checked={draftInvitee.asistira}
-                                  onChange={(e) =>
-                                    setDraftInvitee((current) => ({ ...current, asistira: e.target.checked }))
-                                  }
-                                  className="h-4 w-4 accent-[#b08968]"
-                                />
-                                Seleccionar
-                              </label>
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={saveInvitee}
-                                  className="rounded-full bg-[#2a2418] px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
-                                >
-                                  Guardar
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingId(null)}
-                                  className="rounded-full border border-[#d4b483]/30 bg-white px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
-                                >
-                                  Cancelar
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
 
         <p className="mt-10 flex items-center justify-center gap-1.5 text-xs text-[#faf6ef]/40">
           Hecho con

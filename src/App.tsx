@@ -46,6 +46,10 @@ export default function App() {
   const [guestLabel, setGuestLabel] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [familyMembers, setFamilyMembers] = useState<string[]>([]);
+  const [isAdminPage, setIsAdminPage] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.location.hash === '#/admin';
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -53,6 +57,15 @@ export default function App() {
     setGuestLabel(result.guestLabel);
     setFamilyName(result.familyName);
     setFamilyMembers(result.familyMembers);
+  }, []);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setIsAdminPage(window.location.hash === '#/admin');
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   useEffect(() => {
@@ -65,6 +78,10 @@ export default function App() {
       // El navegador puede bloquear la reproducción automática hasta la interacción del usuario.
     });
   }, [entered]);
+
+  if (isAdminPage) {
+    return <Footer adminOnly />;
+  }
 
   if (!entered) {
     return <Intro guestLabel={guestLabel} onEnter={() => setEntered(true)} />;
