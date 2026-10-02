@@ -96,6 +96,17 @@ export default function Footer() {
     grupo: '',
     asistira: false,
   });
+  const [showNewInviteeForm, setShowNewInviteeForm] = useState(false);
+  const [newInvitee, setNewInvitee] = useState({
+    nombre: '',
+    email: '',
+    telefono: '',
+    mesa: null as number | null,
+    familia: '',
+    lista: '',
+    grupo: '',
+    asistira: false,
+  });
   const [customText, setCustomText] = useState(
     '¡Hola {nombre}! Te invitamos a celebrar nuestro día más especial. Te esperamos en nuestra boda de Belén y Facundo. Nos encantaría compartir este momento contigo. Invitación: {link}'
   );
@@ -295,17 +306,83 @@ export default function Footer() {
     }
   };
 
+  const createInvitee = async () => {
+    const trimmedNombre = newInvitee.nombre.trim();
+    if (!trimmedNombre) return;
+
+    const payload = {
+      id:
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      nombre: trimmedNombre,
+      email: newInvitee.email.trim() || '',
+      telefono: newInvitee.telefono.trim() || null,
+      mesa: newInvitee.mesa ?? null,
+      familia: newInvitee.familia.trim() || null,
+      lista: newInvitee.lista.trim() || null,
+      grupo: newInvitee.grupo.trim() || null,
+      asistira: newInvitee.asistira,
+      cantidad_acompanantes: 0,
+      invitacion_enviada: false,
+      mensaje: null,
+      restriccion_alimentaria: null,
+      cancion_recomendada: null,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase.from('rsvp').insert(payload).select().single();
+
+    if (error) {
+      console.error(error);
+      window.alert('No se pudo crear el invitado. Revisá la conexión o las políticas de Supabase.');
+      return;
+    }
+
+    const createdInvitee: Invitee = {
+      id: data.id,
+      nombre: data.nombre,
+      email: data.email,
+      telefono: data.telefono,
+      asistira: data.asistira,
+      cantidad_acompanantes: data.cantidad_acompanantes ?? 0,
+      mesa: data.mesa ?? null,
+      familia: data.familia ?? null,
+      lista: data.lista ?? null,
+      grupo: data.grupo ?? null,
+      invitacion_enviada: data.invitacion_enviada ?? false,
+      created_at: data.created_at,
+    };
+
+    setInvitees((current) => [createdInvitee, ...current]);
+    setNewInvitee({
+      nombre: '',
+      email: '',
+      telefono: '',
+      mesa: null,
+      familia: '',
+      lista: '',
+      grupo: '',
+      asistira: false,
+    });
+    setShowNewInviteeForm(false);
+  };
+
   const deleteInvitee = async (id: string) => {
     const confirmed = window.confirm('¿Seguro que querés borrar este invitado?');
     if (!confirmed) return;
 
     const { error } = await supabase.from('rsvp').delete().eq('id', id);
-    if (!error) {
-      setInvitees((current) => current.filter((invitee) => invitee.id !== id));
-      setSelectedIds((current) => current.filter((item) => item !== id));
-      if (editingId === id) {
-        setEditingId(null);
-      }
+    if (error) {
+      console.error(error);
+      window.alert('No se pudo borrar el invitado. Revisá la política DELETE en Supabase.');
+      return;
+    }
+
+    setInvitees((current) => current.filter((invitee) => invitee.id !== id));
+    setSelectedIds((current) => current.filter((item) => item !== id));
+    if (editingId === id) {
+      setEditingId(null);
     }
   };
 
@@ -716,17 +793,128 @@ export default function Footer() {
 
         {isAuthenticated && adminOpen && (
           <div className="mt-6 rounded-[2rem] border border-[#d4b483]/25 bg-[#f8f1e7] p-4 text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)] sm:p-6">
-            <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2 text-[#3a3022]">
                 <Users className="h-5 w-5 text-[#b08968]" />
                 <h3 className="text-lg font-semibold">Panel de invitados</h3>
               </div>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d4b483]/35 bg-white px-2.5 py-2 text-xs font-medium text-[#3a3022]">
-                <Upload className="h-4 w-4" />
-                Import Excel
-                <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileImport} />
-              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewInviteeForm((value) => !value)}
+                  className="rounded-full bg-[#2a2418] px-3 py-2 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+                >
+                  {showNewInviteeForm ? 'Cerrar' : 'Nuevo invitado'}
+                </button>
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d4b483]/35 bg-white px-2.5 py-2 text-xs font-medium text-[#3a3022]">
+                  <Upload className="h-4 w-4" />
+                  Import Excel
+                  <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFileImport} />
+                </label>
+              </div>
             </div>
+
+            {showNewInviteeForm && (
+              <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#3a3022]">Agregar invitado</h4>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    Nombre
+                    <input
+                      type="text"
+                      value={newInvitee.nombre}
+                      onChange={(e) => setNewInvitee((current) => ({ ...current, nombre: e.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    />
+                  </label>
+                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    Email
+                    <input
+                      type="email"
+                      value={newInvitee.email}
+                      onChange={(e) => setNewInvitee((current) => ({ ...current, email: e.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    />
+                  </label>
+                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    Teléfono
+                    <input
+                      type="text"
+                      value={newInvitee.telefono}
+                      onChange={(e) => setNewInvitee((current) => ({ ...current, telefono: e.target.value }))}
+                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    />
+                  </label>
+                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    Mesa
+                    <select
+                      value={newInvitee.mesa ?? ''}
+                      onChange={(e) =>
+                        setNewInvitee((current) => ({
+                          ...current,
+                          mesa: e.target.value === '' ? null : Number(e.target.value),
+                        }))
+                      }
+                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    >
+                      <option value="">Sin mesa</option>
+                      {Array.from({ length: TABLE_COUNT }, (_, index) => (
+                        <option key={index + 1} value={index + 1}>
+                          Mesa {index + 1}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs uppercase tracking-[0.2em] text-[#7c5e3c] sm:col-span-2">
+                    Familia / lista
+                    <input
+                      type="text"
+                      value={newInvitee.familia || newInvitee.lista || ''}
+                      onChange={(e) =>
+                        setNewInvitee((current) => ({
+                          ...current,
+                          familia: e.target.value,
+                          lista: e.target.value,
+                          grupo: e.target.value,
+                        }))
+                      }
+                      className="mt-1 w-full rounded-xl border border-[#e0d0b0] bg-[#fffdf9] px-3 py-2 text-sm text-[#3a3022] outline-none focus:border-[#d4b483]"
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
+                    <input
+                      type="checkbox"
+                      checked={newInvitee.asistira}
+                      onChange={(e) => setNewInvitee((current) => ({ ...current, asistira: e.target.checked }))}
+                      className="h-4 w-4 accent-[#b08968]"
+                    />
+                    Confirma asistencia
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={createInvitee}
+                      className="rounded-full bg-[#2a2418] px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#f9f4ee]"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewInviteeForm(false)}
+                      className="rounded-full border border-[#d4b483]/30 bg-white px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-[#4d3d2a]"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mb-4 rounded-2xl border border-[#e6d5b8] bg-white p-3">
               <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-[#7c5e3c]">
