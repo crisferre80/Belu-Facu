@@ -63,7 +63,7 @@ export default function Hero({ guestLabel, familyName, familyMembers = [] }: Her
         <div className="mt-8 flex items-center gap-3 opacity-80">
           <span className="h-px w-12 bg-[#d4b483]" />
           <p className="font-[\'Cormorant_Garamond\'] text-lg sm:text-xl tracking-widest">
-            22 · 01 · 2027
+            30 · 01 · 2027
           </p>
           <span className="h-px w-12 bg-[#d4b483]" />
         </div>

@@ -2,10 +2,53 @@ export const weddingConfig = {
   brideName: 'Belén',
   groomName: 'Facundo',
   // Fecha del casamiento: 14 de febrero de 2027, 18:00 hs
-  weddingDate: new Date('2027-02-14T18:00:00-03:00'),
+  weddingDate: new Date('2027-01-30T18:00:00-03:00'),
   ceremonyTime: '20:00 hs',
   partyTime: '21:00 hs',
   dressCode: 'Elegante',
+  dressCodeOptions: [
+    {
+      title: 'Mujer',
+      subtitle: 'Vestido largo elegante y sobrio',
+      image: '/WhatsApp Image 2026-10-05 at 19.23.11.jpeg',
+    },
+    {
+      title: 'Hombre',
+      subtitle: 'Traje oscuro, corbata y impecable',
+      image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
+    },
+  ],
+  godparents: [
+    {
+      role: 'Madrina',
+      name: 'Hermana de la novia',
+      image: '/WhatsApp Image 2026-10-05 at 19.24.55.jpeg',
+    },
+    {
+      role: 'Padrino',
+      name: 'Cosme fulanito',
+      image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
+    },
+    {
+      role: 'Madrina',
+      name: 'Cuñada de la novia',
+      image: '/WhatsApp Image 2026-10-05 at 19.59.11.jpeg',
+    },
+  ],
+  witnesses: [
+    {
+      role: 'Testigo',
+      name: 'Nombre y apellido',
+      image: '/WhatsApp Image 2026-10-05 at 19.24.55.jpeg',
+    },
+    {
+      role: 'Testigo',
+      name: 'Nombre y apellido',
+      image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
+    },
+  ],
+  giftAlias: 'bodabelenyfacundo.',
+  giftAmount: '$50.000 ARS',
   venueName: 'Sindicato de Camioneros',
   venueAddress: 'Ruta Nueve 9-El Zanjon, Santigo del Estero - Argentina',
   // Coordenadas aproximadas para el mapa (Córdoba, Argentina)

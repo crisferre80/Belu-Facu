@@ -105,7 +105,7 @@ export default function Intro({ onEnter, guestLabel }: Props) {
         <div className="mt-8 flex items-center gap-3 opacity-70">
           <span className="h-px w-12 bg-[#d4b483]" />
           <p className="font-['Cormorant_Garamond'] text-base sm:text-lg tracking-widest">
-            22 · 01 · 2027
+            30 · 01 · 2027
           </p>
           <span className="h-px w-12 bg-[#d4b483]" />
         </div>

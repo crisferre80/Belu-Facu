@@ -1345,7 +1345,7 @@ export default function Footer({ adminOnly = false }: FooterProps) {
         </h2>
 
         <p className="text-[#d4b483] tracking-widest text-lg mb-10">
-          22 · 01 · 2027
+          30 · 01 · 2027
         </p>
 
         <div className="mb-10 flex items-center justify-center gap-4">
