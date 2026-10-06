@@ -79,5 +79,5 @@ export const weddingConfig = {
   heroImage:
     'https://res.cloudinary.com/dhvrrxejo/image/upload/v1790565329/_MG_0127byn_ez5bly.jpg',
   bouquetImage:
-    '/public/Fotos/_MG_0207.JPG',
+    '/Fotos/_MG_0207.JPG',
 };

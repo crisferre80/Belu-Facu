@@ -27,7 +27,7 @@ export default function Story() {
         <div className="mt-12 overflow-hidden rounded-2xl shadow-xl">
           <img
             src={weddingConfig.bouquetImage}
-            alt="Ramo de novia"
+            alt="Nuestra Alianza"
             className="w-full object-cover transition-transform duration-700 hover:scale-105"
             loading="lazy"
           />
