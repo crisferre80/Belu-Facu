@@ -36,8 +36,11 @@ export default function Gallery() {
           inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
         }`}
       >
+        <h1 className="mb-4 text-center font-['Cormorant_Garamond'] text-3xl font-bold text-[#3a3022] sm:text-4xl">
+          Book de Fotos
+        </h1>
         <h2 className="mb-4 text-center font-['Cormorant_Garamond'] text-3xl font-light text-[#3a3022] sm:text-4xl">
-          Momentos que atesoramos
+          Momentos que atesoraremos
         </h2>
         <p className="mb-10 text-center text-sm uppercase tracking-[0.3em] text-[#b08968]">
           Nuestro camino hasta aquí

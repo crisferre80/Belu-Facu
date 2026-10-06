@@ -49,12 +49,11 @@ export const weddingConfig = {
   ],
   giftAlias: 'bodabelenyfacundo.',
   giftAmount: '$50.000 ARS',
-  venueName: 'Sindicato de Camioneros',
-  venueAddress: 'Ruta Nueve 9-El Zanjon, Santigo del Estero - Argentina',
-  // Coordenadas aproximadas para el mapa (Córdoba, Argentina)
-  venueLat: -31.4201,
-  venueLng: -64.1888,
-  mapsQuery: 'Sindicato de Camioneros+Santiago del Estero+Argentina',
+  
+  venueLat: -27.866792495203992,
+  venueLng: -64.23816356292568,
+  venueAddress: 'Santiago del Estero, Argentina',
+  mapsQuery: '-27.866792495203992,-64.23816356292568',
   whatsappPhone: '543856175610',
   email: 'facundotrejo95@icloud.com',
   hashtag: 'BelenYFacundo2027',
@@ -80,5 +79,5 @@ export const weddingConfig = {
   heroImage:
     'https://res.cloudinary.com/dhvrrxejo/image/upload/v1790565329/_MG_0127byn_ez5bly.jpg',
   bouquetImage:
-    'https://res.cloudinary.com/dhvrrxejo/image/upload/v1790568616/_MG_0207-bordes-difuminados_bsylez.webp',
+    '/public/Fotos/_MG_0207.JPG',
 };

@@ -7,9 +7,9 @@ export default function Location() {
 
   const { venueLat, venueLng, mapsQuery } = weddingConfig;
 
-  const embedSrc = `https://maps.google.com/maps?q=${mapsQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+  const embedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(mapsQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${venueLat},${venueLng}`;
-  const placeUrl = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+  const placeUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
 
   return (
     <section id="ubicacion" className="bg-[#f5ede0] py-20 sm:py-28">
@@ -23,7 +23,7 @@ export default function Location() {
           Cómo llegar
         </h2>
         <p className="mb-10 text-center text-sm uppercase tracking-[0.3em] text-[#b08968]">
-          Te esperamos en {weddingConfig.venueName}
+          Te esperamos en el lugar de la celebración
         </p>
 
         <div className="overflow-hidden rounded-2xl border-4 border-white shadow-xl">

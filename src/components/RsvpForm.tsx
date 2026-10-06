@@ -238,32 +238,14 @@ export default function RsvpForm() {
               value={form.telefono}
               onChange={(e) => update('telefono', e.target.value)}
               className={inputClass}
-              placeholder="+54 351 000 0000"
+              placeholder="+54 385 000 0000"
             />
           </div>
 
           {/* Acompañantes — solo si asiste */}
           {form.asistira && (
             <>
-              <div className="mt-5">
-                <label className={labelClass} htmlFor="acompanantes">
-                  ¿Cuántos acompañantes llevás?
-                </label>
-                <select
-                  id="acompanantes"
-                  value={form.cantidad_acompanantes}
-                  onChange={(e) =>
-                    update('cantidad_acompanantes', parseInt(e.target.value, 10))
-                  }
-                  className={inputClass}
-                >
-                  {[0, 1, 2, 3, 4].map((n) => (
-                    <option key={n} value={n}>
-                      {n === 0 ? 'Sin acompañantes' : `${n} acompañante${n > 1 ? 's' : ''}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              
 
               <div className="mt-5">
                 <label className={labelClass} htmlFor="restriccion">
@@ -279,19 +261,7 @@ export default function RsvpForm() {
                 />
               </div>
 
-              <div className="mt-5">
-                <label className={labelClass} htmlFor="cancion">
-                  ¿Qué canción no puede faltar en la fiesta?
-                </label>
-                <input
-                  id="cancion"
-                  type="text"
-                  value={form.cancion_recomendada}
-                  onChange={(e) => update('cancion_recomendada', e.target.value)}
-                  className={inputClass}
-                  placeholder="Nombre de la canción y artista (opcional)"
-                />
-              </div>
+              
             </>
           )}
 

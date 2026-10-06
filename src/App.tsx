@@ -4,7 +4,6 @@ import Hero from '@/components/Hero';
 import Countdown from '@/components/Countdown';
 import Story from '@/components/Story';
 import Details from '@/components/Details';
-import Location from '@/components/Location';
 import Gallery from '@/components/Gallery';
 import RsvpForm from '@/components/RsvpForm';
 import Footer from '@/components/Footer';
@@ -73,7 +72,8 @@ export default function App() {
 
     const audio = audioRef.current;
     audio.volume = 0.35;
-    audio.loop = true;
+    audio.loop = false;
+    audio.currentTime = 0;
     audio.play().catch(() => {
       // El navegador puede bloquear la reproducción automática hasta la interacción del usuario.
     });
@@ -89,7 +89,7 @@ export default function App() {
 
   return (
     <div id="top" className="relative min-h-screen bg-[#faf6ef] animate-fade-in-up">
-      <audio ref={audioRef} preload="auto" loop>
+      <audio ref={audioRef} preload="auto">
         <source src="/Justin Bieber - Peaches .mp3" type="audio/mpeg" />
       </audio>
       <div className="pointer-events-none fixed inset-0 z-10 overflow-hidden">
@@ -111,7 +111,6 @@ export default function App() {
         <Countdown />
         <Story />
         <Details />
-        <Location />
         <Gallery />
         <RsvpForm />
         <Footer />
