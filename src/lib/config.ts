@@ -18,33 +18,45 @@ export const weddingConfig = {
       image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
     },
   ],
-  godparents: [
+  madrinas: [
     {
-      role: 'Madrina',
       name: 'Hermana de la novia',
       image: '/WhatsApp Image 2026-10-05 at 19.24.55.jpeg',
     },
     {
-      role: 'Padrino',
-      name: 'Cosme fulanito',
-      image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
-    },
-    {
-      role: 'Madrina',
       name: 'Cuñada de la novia',
       image: '/WhatsApp Image 2026-10-05 at 19.59.11.jpeg',
     },
-  ],
-  witnesses: [
     {
-      role: 'Testigo',
-      name: 'Nombre y apellido',
-      image: '/WhatsApp Image 2026-10-05 at 19.24.55.jpeg',
+      name: 'Amiga de la novia',
+      image: '/WhatsApp Image 2026-10-07 at 11.31.50.jpeg',
     },
     {
-      role: 'Testigo',
-      name: 'Nombre y apellido',
-      image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
+      name: 'Amiga de la novia',
+      image: '/WhatsApp Image 2026-10-07 at 13.31.34.jpeg',
+    },
+    
+  ],
+  padrinos: [
+    {
+      name: 'Amigo del novio',
+      image: '/WhatsApp Image 2026-10-07 at 11.33.51 (3).jpeg',
+    },
+    {
+      name: 'Amigo del novio',
+      image: '/WhatsApp Image 2026-10-07 at 13.31.25.jpeg',
+    },
+    {
+      name: 'Amigo del novio',
+      image: '/WhatsApp Image 2026-10-07 at 11.33.51 (1).jpeg',
+    },
+    {
+      name: 'Amigo del novio',
+      image: '/WhatsApp Image 2026-10-07 at 11.33.51.jpeg',
+    },
+    {
+      name: 'Amigo del novio',
+      image: '/WhatsApp Image 2026-10-07 at 11.33.51 (2).jpeg',
     },
   ],
   giftAlias: 'bodabelenyfacundo.',

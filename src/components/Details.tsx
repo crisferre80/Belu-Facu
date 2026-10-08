@@ -6,25 +6,25 @@ import { useInView } from '@/hooks/useInView';
 export default function Details() {
   const { ref, inView } = useInView<HTMLDivElement>();
   const [activePanel, setActivePanel] = useState<'location' | 'dressCode' | null>(null);
-  const [godparentsIndex, setGodparentsIndex] = useState(0);
-  const [witnessesIndex, setWitnessesIndex] = useState(0);
+  const [madrinasIndex, setMadrinasIndex] = useState(0);
+  const [padrinosIndex, setPadrinosIndex] = useState(0);
   const [songName, setSongName] = useState('');
   const [submittedSong, setSubmittedSong] = useState('');
 
-  const nextGodparent = () => {
-    setGodparentsIndex((current) => (current + 1) % weddingConfig.godparents.length);
+  const nextMadrina = () => {
+    setMadrinasIndex((current) => (current + 1) % weddingConfig.madrinas.length);
   };
 
-  const prevGodparent = () => {
-    setGodparentsIndex((current) => (current - 1 + weddingConfig.godparents.length) % weddingConfig.godparents.length);
+  const prevMadrina = () => {
+    setMadrinasIndex((current) => (current - 1 + weddingConfig.madrinas.length) % weddingConfig.madrinas.length);
   };
 
-  const nextWitness = () => {
-    setWitnessesIndex((current) => (current + 1) % weddingConfig.witnesses.length);
+  const nextPadrino = () => {
+    setPadrinosIndex((current) => (current + 1) % weddingConfig.padrinos.length);
   };
 
-  const prevWitness = () => {
-    setWitnessesIndex((current) => (current - 1 + weddingConfig.witnesses.length) % weddingConfig.witnesses.length);
+  const prevPadrino = () => {
+    setPadrinosIndex((current) => (current - 1 + weddingConfig.padrinos.length) % weddingConfig.padrinos.length);
   };
 
   const handleSongSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -211,26 +211,26 @@ export default function Details() {
               <div className="mb-6 flex items-center justify-center gap-3 text-center">
                 <Users className="h-5 w-5 text-[#b08968]" />
                 <h3 className="font-[\'Cormorant_Garamond\'] text-2xl text-[#3a3022]">
-                  Padrinos y Madrinas
+                  Madrinas
                 </h3>
               </div>
 
               <div className="flex items-center justify-center gap-3">
                 <button
                   type="button"
-                  aria-label="Anterior padrino o madrina"
-                  onClick={prevGodparent}
+                  aria-label="Anterior madrina"
+                  onClick={prevMadrina}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4b483] bg-white text-[#3a3022] shadow-sm transition hover:bg-[#f5ede0]"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
                 <div className="relative flex h-[220px] w-[220px] items-center justify-center overflow-hidden">
-                  {weddingConfig.godparents.map((person, index) => {
-                    const isActive = index === godparentsIndex;
+                  {weddingConfig.madrinas.map((person, index) => {
+                    const isActive = index === madrinasIndex;
                     return (
                       <div
-                        key={`${person.role}-${person.name}`}
+                        key={person.name}
                         className={`absolute inset-0 flex flex-col items-center justify-center rounded-[2rem] border border-[#e6d5b8] bg-white/80 p-4 shadow-[0_24px_50px_rgba(58,48,34,0.08)] backdrop-blur-sm transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                           isActive
                             ? 'translate-x-0 scale-100 opacity-100 blur-0'
@@ -244,7 +244,7 @@ export default function Details() {
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        <p className="text-[10px] uppercase tracking-[0.25em] text-[#b08968]">{person.role}</p>
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-[#b08968]">Madrina</p>
                         <p className="mt-2 text-center font-[\'Cormorant_Garamond\'] text-xl text-[#3a3022]">
                           {person.name}
                         </p>
@@ -255,8 +255,8 @@ export default function Details() {
 
                 <button
                   type="button"
-                  aria-label="Siguiente padrino o madrina"
-                  onClick={nextGodparent}
+                  aria-label="Siguiente madrina"
+                  onClick={nextMadrina}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4b483] bg-white text-[#3a3022] shadow-sm transition hover:bg-[#f5ede0]"
                 >
                   <ChevronRight className="h-5 w-5" />
@@ -268,26 +268,26 @@ export default function Details() {
               <div className="mb-6 flex items-center justify-center gap-3 text-center">
                 <Users className="h-5 w-5 text-[#b08968]" />
                 <h3 className="font-[\'Cormorant_Garamond\'] text-2xl text-[#3a3022]">
-                  Testigos
+                  Padrinos
                 </h3>
               </div>
 
               <div className="flex items-center justify-center gap-3">
                 <button
                   type="button"
-                  aria-label="Anterior testigo"
-                  onClick={prevWitness}
+                  aria-label="Anterior padrino"
+                  onClick={prevPadrino}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4b483] bg-white text-[#3a3022] shadow-sm transition hover:bg-[#f5ede0]"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
                 <div className="relative flex h-[220px] w-[220px] items-center justify-center overflow-hidden">
-                  {weddingConfig.witnesses.map((person, index) => {
-                    const isActive = index === witnessesIndex;
+                  {weddingConfig.padrinos.map((person, index) => {
+                    const isActive = index === padrinosIndex;
                     return (
                       <div
-                        key={`${person.role}-${person.name}`}
+                        key={person.name}
                         className={`absolute inset-0 flex flex-col items-center justify-center rounded-[2rem] border border-[#e6d5b8] bg-white/80 p-4 shadow-[0_24px_50px_rgba(58,48,34,0.08)] backdrop-blur-sm transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                           isActive
                             ? 'translate-x-0 scale-100 opacity-100 blur-0'
@@ -301,7 +301,7 @@ export default function Details() {
                             className="h-full w-full object-cover"
                           />
                         </div>
-                        <p className="text-[10px] uppercase tracking-[0.25em] text-[#b08968]">{person.role}</p>
+                        <p className="text-[10px] uppercase tracking-[0.25em] text-[#b08968]">Padrino</p>
                         <p className="mt-2 text-center font-[\'Cormorant_Garamond\'] text-xl text-[#3a3022]">
                           {person.name}
                         </p>
@@ -312,8 +312,8 @@ export default function Details() {
 
                 <button
                   type="button"
-                  aria-label="Siguiente testigo"
-                  onClick={nextWitness}
+                  aria-label="Siguiente padrino"
+                  onClick={nextPadrino}
                   className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4b483] bg-white text-[#3a3022] shadow-sm transition hover:bg-[#f5ede0]"
                 >
                   <ChevronRight className="h-5 w-5" />
