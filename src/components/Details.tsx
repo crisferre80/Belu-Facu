@@ -1,7 +1,62 @@
 import { Clock, MapPin, Shirt, PartyPopper, Gift, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { weddingConfig } from '@/lib/config';
+import { supabase } from '@/lib/supabase';
 import { useInView } from '@/hooks/useInView';
+
+const GUEST_STORAGE_KEY = 'belen-facundo-guest';
+const PROOF_STORAGE_KEY = 'belen-facundo-proof-history';
+
+const getStoredGuest = () => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const rawValue = window.localStorage.getItem(GUEST_STORAGE_KEY);
+    if (!rawValue) return null;
+    return JSON.parse(rawValue) as { nombre?: string; email?: string; telefono?: string | null };
+  } catch {
+    return null;
+  }
+};
+
+const getStoredProofHistory = () => {
+  if (typeof window === 'undefined') return [] as Array<{ nombre: string; filename: string; url: string; uploadedAt: string; status: string }>;
+
+  try {
+    const rawValue = window.localStorage.getItem(PROOF_STORAGE_KEY);
+    return rawValue ? (JSON.parse(rawValue) as Array<{ nombre: string; filename: string; url: string; uploadedAt: string; status: string }>) : [];
+  } catch {
+    return [] as Array<{ nombre: string; filename: string; url: string; uploadedAt: string; status: string }>;
+  }
+};
+
+const getGuestNameFromUrl = () => {
+  if (typeof window === 'undefined') return '';
+
+  const params = new URLSearchParams(window.location.search);
+  const rawValue =
+    params.get('invitado') ??
+    params.get('nombre') ??
+    params.get('name') ??
+    params.get('guest') ??
+    params.get('familia') ??
+    params.get('grupo') ??
+    '';
+
+  return rawValue
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(', ');
+};
+
+const getGuestNameForProof = () => {
+  const urlGuest = getGuestNameFromUrl();
+  if (urlGuest) return urlGuest;
+
+  const storedGuest = getStoredGuest();
+  return storedGuest?.nombre?.trim() || '';
+};
 
 export default function Details() {
   const { ref, inView } = useInView<HTMLDivElement>();
@@ -10,6 +65,9 @@ export default function Details() {
   const [padrinosIndex, setPadrinosIndex] = useState(0);
   const [songName, setSongName] = useState('');
   const [submittedSong, setSubmittedSong] = useState('');
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
+  const [proofUploadMessage, setProofUploadMessage] = useState('');
+  const [proofUploadError, setProofUploadError] = useState('');
 
   const nextMadrina = () => {
     setMadrinasIndex((current) => (current + 1) % weddingConfig.madrinas.length);
@@ -35,6 +93,92 @@ export default function Details() {
     }
   };
 
+  const handleProofUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) return;
+
+    setIsUploadingProof(true);
+    setProofUploadMessage('');
+    setProofUploadError('');
+
+    try {
+      const guestName = getGuestNameForProof();
+      if (!guestName) {
+        throw new Error('No pudimos identificar al invitado para asociar el comprobante. Confirmá tu asistencia primero.');
+      }
+
+      const storageBucket = 'comprobantes';
+      const ext = selectedFile.name.split('.').pop() || 'file';
+      const safeGuestName = guestName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'invitado';
+      const storagePath = `${safeGuestName}/${safeGuestName}-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(storageBucket)
+        .upload(storagePath, selectedFile, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: selectedFile.type || 'application/octet-stream',
+        });
+
+      if (uploadError) {
+        throw new Error(uploadError.message || 'No se pudo subir el comprobante.');
+      }
+
+      const { data: publicUrlData } = supabase.storage.from(storageBucket).getPublicUrl(storagePath);
+
+      const { data: existingRows, error: fetchError } = await supabase
+        .from('rsvp')
+        .select('id')
+        .ilike('nombre', guestName)
+        .limit(1);
+
+      const proofRecord = {
+        nombre: guestName,
+        filename: selectedFile.name,
+        url: publicUrlData.publicUrl,
+        uploadedAt: new Date().toISOString(),
+        status: 'guardado',
+      };
+
+      if (fetchError) {
+        throw new Error('No se pudo vincular el comprobante con tu registro.');
+      }
+
+      const guestRow = existingRows?.[0];
+
+      if (guestRow) {
+        const { error: updateError } = await supabase
+          .from('rsvp')
+          .update({ comprobante_url: publicUrlData.publicUrl })
+          .eq('id', guestRow.id);
+
+        if (updateError) {
+          throw new Error(updateError.message || 'No se pudo guardar la URL del comprobante.');
+        }
+
+        setProofUploadMessage('Comprobante subido correctamente.');
+      } else {
+        const proofHistory = getStoredProofHistory();
+        const updatedHistory = [...proofHistory, { ...proofRecord, status: 'guardado-localmente' }];
+        window.localStorage.setItem(PROOF_STORAGE_KEY, JSON.stringify(updatedHistory));
+        setProofUploadMessage('Comprobante guardado localmente. Cuando vuelvas con tu nombre registrado, quedará asociado a tu invitación.');
+      }
+
+      event.target.value = '';
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Ocurrió un error al subir el comprobante.';
+      setProofUploadError(message);
+    } finally {
+      setIsUploadingProof(false);
+    }
+  };
+
+  const proofHistory = getStoredProofHistory();
   const embedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(weddingConfig.mapsQuery)}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${weddingConfig.venueLat},${weddingConfig.venueLng}`;
   const placeUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(weddingConfig.mapsQuery)}`;
@@ -196,6 +340,9 @@ export default function Details() {
                 <p className="mt-3 break-all text-xl font-semibold text-[#3a3022] sm:text-2xl">
                   {weddingConfig.giftAlias}
                 </p>
+                <p className="mt-3 text-xs uppercase tracking-[0.15em] text-[#7c5e3c]">
+                  Titular: Cristian Raul Ferreyra 
+                </p>
               </div>
               <div className="rounded-xl border border-[#e6d5b8] bg-white/80 p-4 text-center sm:p-5">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-[#b08968] sm:text-xs">Monto</p>
@@ -203,6 +350,70 @@ export default function Details() {
                   {weddingConfig.giftAmount}
                 </p>
               </div>
+            </div>
+
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+                <a
+                  href="#confirmar"
+                  className="inline-flex items-center justify-center rounded-full border border-[#d4b483] bg-white px-6 py-3 text-[10px] font-medium uppercase tracking-[0.2em] text-[#3a3022] shadow-sm transition hover:bg-[#f5ede0]"
+                >
+                  Confirmar
+                </a>
+                <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-[#7c5e3c] px-6 py-3 text-[10px] font-medium uppercase tracking-[0.2em] text-white shadow-md transition hover:bg-[#5c4429] disabled:cursor-not-allowed disabled:opacity-60">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="sr-only"
+                    disabled={isUploadingProof}
+                    onChange={handleProofUpload}
+                  />
+                  {isUploadingProof ? 'Subiendo...' : 'Subir comprobante'}
+                </label>
+              </div>
+
+              <p className="text-center text-xs uppercase tracking-[0.2em] text-[#b08968] sm:text-[11px]">
+                Confirmá tu asistencia para registrar tu nombre y luego hacé la transferencia y subí el comprobante. La fecha límite para pagar la tarjeta es el 31 de diciembre de 2026.
+              </p>
+
+              {proofHistory.length > 0 && (
+                <div className="w-full max-w-xl rounded-2xl border border-[#e6d5b8] bg-white/80 p-4 text-left">
+                  <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-[#b08968] sm:text-xs">
+                    Comprobantes subidos
+                  </p>
+                  <ul className="space-y-2">
+                    {proofHistory.slice().reverse().map((proof, index) => (
+                      <li key={`${proof.filename}-${proof.uploadedAt}-${index}`} className="flex flex-col gap-1 rounded-xl border border-[#f0e0c7] bg-[#faf6ef] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-[#3a3022]">{proof.filename}</p>
+                          <p className="text-[10px] uppercase tracking-[0.15em] text-[#b08968]">
+                            {new Date(proof.uploadedAt).toLocaleDateString('es-AR', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                            })}
+                          </p>
+                        </div>
+                        <a
+                          href={proof.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] uppercase tracking-[0.2em] text-[#7c5e3c] underline-offset-4 hover:underline"
+                        >
+                          Ver
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {proofUploadMessage && (
+                <p className="text-center text-sm text-[#2e6b2e]">{proofUploadMessage}</p>
+              )}
+              {proofUploadError && (
+                <p className="text-center text-sm text-[#9a3d2d]">{proofUploadError}</p>
+              )}
             </div>
           </div>
 
@@ -230,7 +441,7 @@ export default function Details() {
                     const isActive = index === madrinasIndex;
                     return (
                       <div
-                        key={person.name}
+                        key={`${person.name}-${index}`}
                         className={`absolute inset-0 flex flex-col items-center justify-center rounded-[2rem] border border-[#e6d5b8] bg-white/80 p-4 shadow-[0_24px_50px_rgba(58,48,34,0.08)] backdrop-blur-sm transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                           isActive
                             ? 'translate-x-0 scale-100 opacity-100 blur-0'
@@ -287,7 +498,7 @@ export default function Details() {
                     const isActive = index === padrinosIndex;
                     return (
                       <div
-                        key={person.name}
+                        key={`${person.name}-${index}`}
                         className={`absolute inset-0 flex flex-col items-center justify-center rounded-[2rem] border border-[#e6d5b8] bg-white/80 p-4 shadow-[0_24px_50px_rgba(58,48,34,0.08)] backdrop-blur-sm transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                           isActive
                             ? 'translate-x-0 scale-100 opacity-100 blur-0'

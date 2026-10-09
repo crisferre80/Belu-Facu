@@ -20,5 +20,6 @@ export type Rsvp = {
   mensaje: string | null;
   restriccion_alimentaria: string | null;
   cancion_recomendada: string | null;
+  comprobante_url: string | null;
   created_at: string;
 };

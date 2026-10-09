@@ -81,6 +81,15 @@ export default function RsvpForm() {
       return;
     }
 
+    const guestRecord = {
+      nombre,
+      email: form.email.trim(),
+      telefono: form.telefono.trim() || null,
+      asistira: form.asistira,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem('belen-facundo-guest', JSON.stringify(guestRecord));
+
     window.dispatchEvent(new CustomEvent('rsvp-updated'));
     setStatus('success');
   };
