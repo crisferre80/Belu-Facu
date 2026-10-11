@@ -37,7 +37,7 @@ export default function RsvpForm() {
       return;
     }
 
-    const payload: Omit<Rsvp, 'id' | 'created_at'> = {
+    const payload: Omit<Rsvp, 'id' | 'created_at' | 'comprobante_url'> = {
       nombre,
       email: form.email.trim(),
       telefono: form.telefono.trim() || null,

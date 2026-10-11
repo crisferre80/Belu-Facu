@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Heart, Mail, Upload, Users, Send, ChevronDown, ChevronUp, LockKeyhole } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, Heart, Mail, Upload, Users, Send, ChevronDown, ChevronUp, LockKeyhole } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { weddingConfig } from '@/lib/config';
 import { supabase, type Rsvp } from '@/lib/supabase';
@@ -22,7 +22,35 @@ type Invitee = {
   created_at?: string | null;
 };
 
+const toInvitee = (item: Rsvp): Invitee => ({
+  id: item.id,
+  nombre: item.nombre,
+  email: item.email,
+  telefono: item.telefono,
+  asistira: item.asistira,
+  cantidad_acompanantes: item.cantidad_acompanantes,
+  mesa: item.mesa ?? null,
+  familia: item.familia ?? null,
+  lista: item.lista ?? null,
+  grupo: item.grupo ?? null,
+  invitacion_enviada: item.invitacion_enviada ?? false,
+  created_at: item.created_at,
+});
+
+const getStoredUnreadConfirmations = (): Invitee[] => {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const stored = window.localStorage.getItem(UNREAD_CONFIRMATIONS_STORAGE_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed.filter((invitee): invitee is Invitee => Boolean(invitee?.id)) : [];
+  } catch {
+    return [];
+  }
+};
+
 const TABLE_COUNT = 10;
+const UNREAD_CONFIRMATIONS_STORAGE_KEY = 'belen-facundo-unread-confirmations';
 
 const normalizePhone = (value: string | null | undefined) => {
   if (!value) return '';
@@ -116,28 +144,51 @@ export default function Footer({ adminOnly = false }: FooterProps) {
   );
   const [isLoading, setIsLoading] = useState(false);
   const [importMessage, setImportMessage] = useState('');
+  const [unreadConfirmations, setUnreadConfirmations] = useState<Invitee[]>(getStoredUnreadConfirmations);
+  const [toastConfirmation, setToastConfirmation] = useState<Invitee | null>(
+    () => getStoredUnreadConfirmations()[0] ?? null
+  );
+  const [showUnreadConfirmations, setShowUnreadConfirmations] = useState(false);
+  const knownConfirmedIdsRef = useRef(new Set<string>());
+  const [initialInviteesLoaded, setInitialInviteesLoaded] = useState(false);
+
+  const addUnreadConfirmation = useCallback((invitee: Invitee) => {
+    setUnreadConfirmations((current) => {
+      if (current.some((item) => item.id === invitee.id)) return current;
+
+      const next = [invitee, ...current];
+      window.localStorage.setItem(UNREAD_CONFIRMATIONS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+    setToastConfirmation(invitee);
+  }, []);
+
+  const markConfirmationsAsRead = () => {
+    setUnreadConfirmations([]);
+    setToastConfirmation(null);
+    setShowUnreadConfirmations(false);
+    window.localStorage.removeItem(UNREAD_CONFIRMATIONS_STORAGE_KEY);
+  };
+
+  const showNewConfirmations = () => {
+    setShowUnreadConfirmations(true);
+    setToastConfirmation(null);
+    window.requestAnimationFrame(() => {
+      document.getElementById('nuevas-confirmaciones')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  };
 
   useEffect(() => {
     const fetchInvitees = async () => {
       setIsLoading(true);
       const { data, error } = await supabase.from('rsvp').select('*').order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
-        setInvitees(
-          data.map((item: Rsvp) => ({
-            id: item.id,
-            nombre: item.nombre,
-            email: item.email,
-            telefono: item.telefono,
-            asistira: item.asistira,
-            cantidad_acompanantes: item.cantidad_acompanantes,
-            mesa: item.mesa ?? null,
-            familia: item.familia ?? null,
-            lista: item.lista ?? null,
-            grupo: item.grupo ?? null,
-            invitacion_enviada: item.invitacion_enviada ?? false,
-            created_at: item.created_at,
-          }))
+        const mappedInvitees = data.map(toInvitee);
+        setInvitees(mappedInvitees);
+        knownConfirmedIdsRef.current = new Set(
+          mappedInvitees.filter((invitee) => invitee.asistira).map((invitee) => invitee.id)
         );
+        setInitialInviteesLoaded(true);
       }
       setIsLoading(false);
     };
@@ -153,6 +204,45 @@ export default function Footer({ adminOnly = false }: FooterProps) {
       window.removeEventListener('rsvp-updated', handleRsvpUpdated);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !initialInviteesLoaded) return;
+
+    const refreshConfirmations = async () => {
+      const { data, error } = await supabase.from('rsvp').select('*').order('created_at', { ascending: false });
+      if (error || !Array.isArray(data)) return;
+
+      const refreshedInvitees = data.map(toInvitee);
+      const newConfirmations = refreshedInvitees.filter(
+        (invitee) => invitee.asistira && !knownConfirmedIdsRef.current.has(invitee.id)
+      );
+
+      knownConfirmedIdsRef.current = new Set(
+        refreshedInvitees.filter((invitee) => invitee.asistira).map((invitee) => invitee.id)
+      );
+      setInvitees(refreshedInvitees);
+      newConfirmations.forEach(addUnreadConfirmation);
+    };
+
+    const channel = supabase
+      .channel('rsvp-confirmations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rsvp' },
+        () => {
+          void refreshConfirmations();
+        }
+      )
+      .subscribe();
+    const pollingId = window.setInterval(() => {
+      void refreshConfirmations();
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(pollingId);
+      void supabase.removeChannel(channel);
+    };
+  }, [addUnreadConfirmation, initialInviteesLoaded, isAuthenticated]);
 
   const selectedInvitees = useMemo(
     () => invitees.filter((invitee) => selectedIds.includes(invitee.id)),
@@ -695,6 +785,35 @@ export default function Footer({ adminOnly = false }: FooterProps) {
 
   const adminVehicle = (
     <div className="w-full text-left">
+      {toastConfirmation && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-5 right-5 z-50 w-[min(24rem,calc(100vw-2.5rem))] rounded-2xl border border-[#b8d0a5] bg-[#f4f9ee] p-4 shadow-[0_16px_35px_rgba(58,48,34,0.2)]"
+        >
+          <div className="flex gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#dcebd0]">
+              <Check className="h-5 w-5 text-[#52733a]" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#3a3022]">
+                {toastConfirmation.nombre} confirmó su asistencia
+              </p>
+              <p className="mt-1 text-xs text-[#627052]">
+                Se agregó a las nuevas confirmaciones.
+              </p>
+              <button
+                type="button"
+                onClick={showNewConfirmations}
+                className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#52733a] underline-offset-4 hover:underline"
+              >
+                Ver confirmaciones
+              </button>
+            </div>
+          </div>
+        </aside>
+      )}
+
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-[#3a3022]">
           <Users className="h-5 w-5 text-[#b08968]" />
@@ -726,6 +845,44 @@ export default function Footer({ adminOnly = false }: FooterProps) {
           )}
         </div>
       </div>
+
+      {unreadConfirmations.length > 0 && (
+        <section
+          id="nuevas-confirmaciones"
+          className="mb-5 rounded-2xl border border-[#b8d0a5] bg-[#f4f9ee] p-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setShowUnreadConfirmations((current) => !current)}
+              className="flex items-center gap-2 text-left text-sm font-semibold text-[#3a3022]"
+              aria-expanded={showUnreadConfirmations}
+            >
+              <Check className="h-4 w-4 text-[#6b8e4e]" />
+              Nuevas confirmaciones ({unreadConfirmations.length})
+              {showUnreadConfirmations ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={markConfirmationsAsRead}
+              className="rounded-full border border-[#9fbd85] bg-white px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-[#52733a]"
+            >
+              Marcar como vistas
+            </button>
+          </div>
+
+          {showUnreadConfirmations && (
+            <ul className="mt-3 space-y-2">
+              {unreadConfirmations.map((invitee) => (
+                <li key={invitee.id} className="rounded-xl border border-[#d7e5c9] bg-white px-3 py-2 text-sm text-[#3a3022]">
+                  <span className="font-medium">{invitee.nombre}</span>
+                  <span className="ml-2 text-xs text-[#6b8e4e]">confirmó que asistirá</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {showNewInviteeForm && (
         <div className="mb-5 rounded-2xl border border-[#e6d5b8] bg-white p-3">
