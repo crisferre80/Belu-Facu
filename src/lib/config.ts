@@ -35,7 +35,10 @@ export const weddingConfig = {
       name: 'Amiga de la novia',
       image: '/WhatsApp Image 2026-10-07 at 13.31.34.jpeg',
     },
-    
+    {
+      name: 'Amiga de la novia',
+      image: '/WhatsApp Image 2026-10-11 at 12.21.05.jpeg',
+    },
   ],
   padrinos: [
     {
