@@ -14,7 +14,7 @@ export const weddingConfig = {
     },
     {
       title: 'Hombre',
-      subtitle: 'Traje oscuro, corbata y impecable',
+      subtitle: 'Traje oscuro, corbata e impecable',
       image: '/WhatsApp Image 2026-10-05 at 19.23.19.jpeg',
     },
   ],
